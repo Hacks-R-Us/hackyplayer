@@ -1,0 +1,4 @@
+.venv
+static/video
+__pycache__
+temp

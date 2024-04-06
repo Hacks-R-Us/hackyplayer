@@ -1,0 +1,52 @@
+<html>
+    <head>
+
+    </head>
+    <body>
+        <h1>Sources</h1>
+        <table>
+          {% for filename in sources -%}
+          <tr>
+            <td><a href="/log/source/{{ filename }}" >{{ filename }}</a></td>
+          </tr>
+          {% endfor -%}
+        </table>
+        <h1>Outputs</h1>
+        <table>
+          {% for filename in outputs -%}
+          <tr>
+            <td><a href="/log/output/{{ filename }}" >{{ filename }}</a></td>
+          </tr>
+          {% endfor -%}
+        </table>
+        <h1>Running Tasks</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Task start time</th>
+              <th>ID</th>
+              <th>Source file</th>
+              <th>Talk Title</th>
+              <th>Talk Presenter</th>
+              <th>Video Start TC</th>
+              <th>Video End TC</th>
+              <th>Worker node</th>
+            </tr>
+          </thead>
+          {% for name,host in running_tasks.items() -%}
+            {% for task in host -%}
+            <tr>
+              <td>{{ task.time_start }}</td>
+              <td>{{ task.id }}</td>
+              <td>{{ task.args[0] }}</td>
+              <td>{{ task.args[1]["title"] }}</td>
+              <td>{{ task.args[1]["presenter"] }}</td>
+              <td>{{ task.args[2] }}</td>
+              <td>{{ task.args[3] }}</td>
+              <td>{{ task.hostname }}</td>
+            </tr>
+            {% endfor -%}
+          {% endfor -%}
+        </table>
+    </body>
+</html>
