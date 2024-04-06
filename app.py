@@ -29,7 +29,6 @@ def index():
     return render_template("index.html", **locals())
 
 @app.route("/log/<vid_dir>/<video>")
-@app.route("/log/<vid_dir>/<video>")
 def log(vid_dir, video):
     return render_template("log.html", vid_dir=vid_dir, video=video)
 
