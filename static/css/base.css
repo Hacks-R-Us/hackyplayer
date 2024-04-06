@@ -2,7 +2,7 @@ table {
     text-align: left
 }
 
-a.help {
+button.help {
     color:#fff;
     background-color:rgb(0, 204, 255);
     width:36px;
@@ -15,4 +15,33 @@ a.help {
     -webkit-box-shadow: inset -1px -1px 1px 0px rgba(0,0,0,0.25);
     -moz-box-shadow: inset -1px -1px 1px 0px rgba(0,0,0,0.25);
     box-shadow: inset -1px -1px 1px 0px rgba(0,0,0,0.25);
+}
+
+video {
+    width:100%;
+    aspect-ratio: 16/9;
+}
+
+div.vid_nav_buttons {
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    display: flex;
+    max-width: 300px;
+}
+
+button {
+    text-align: center;
+    margin: auto;
+}
+
+div.column {
+    width: 33%;
+    display: inline-grid;
+    text-align: center;
+    justify-content: center;
+}
+
+input.timecode {
+    width: 100px;
 }
