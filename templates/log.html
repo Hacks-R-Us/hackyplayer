@@ -5,39 +5,62 @@
         <link rel="stylesheet" href="{{url_for('static', filename='css/log.css')}}">
     </head>
     <body>
-        <div class="vid_controls">
-        <video id="video1" controls>
-            <source src="/static/video/{{ vid_dir }}/{{ video }}.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
         <form action="/build", method="post">
-            <input type="hidden" name="video" value="{{video}}.mp4">
-            <div class="column">
-                <label>In</label>
-                <input id="intc" name="start_tc" type="text" class="timecode">
+        <div class="vid_controls">
+            <div>
+                <div>
+                    <video id="video1" controls>
+                        <source src="/static/video/{{ vid_dir }}/{{ video }}.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <input id="inputtc" type="text" onkeydown="enter_timecode(this)" onfocus="tc_focus(this)" onblur="tc_focus_off(this)" class="timecode"/>
+                </div>
+                <div class="row">
+                    <div class="column">
+                        <label>In</label>
+                        <input id="intc" name="start_tc" type="text" class="timecode"/>
+                    </div>
+                    <div class="column">
+                        <label>Current</label>
+                        <input disabled id="current_tc" type="text" class="timecode"/>
+                    </div>
+                    <div class="column">
+                        <label>Out</label>
+                        <input id="outtc" name="end_tc" type="text" class="timecode"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <button type="button" onclick="bmi()">Mark In</button>
+                    <button type="button" onclick="bgi()">|&lt</button>
+                    <button type="button" onclick="bfb()">&lt;</button>
+                    <button type="button" onclick="bpp()">&#9658;</button>
+                    <button type="button" onclick="bff()">&gt;</button>
+                    <button type="button" onclick="bgo()">&gt|</button>
+                    <button type="button" onclick="bmo()">Mark Out</button>
+                </div>
             </div>
-            <div class="column">
-                <label>Current</label>
-                <input id="inputtc" type="text" onkeydown="enter_timecode(this)" onfocus="tc_focus(this)" onblur="tc_focus_off(this)" class="timecode">
-            </div>
-            <div class="column">
-                <label>Out</label>
-                <input id="outtc" name="end_tc" type="text" class="timecode">
-            </div>
-            <div class="vid_nav_buttons">
-                <button type="button" onclick="bmi()">Mark In</button>
-                <button type="button" onclick="bgi()">|&lt</button>
-                <button type="button" onclick="bfb()">&lt;</button>
-                <button type="button" onclick="bff()">&gt;</button>
-                <button type="button" onclick="bgo()">&gt|</button>
-                <button type="button" onclick="bmo()">Mark Out</button>
-            </div>
-            <input type="submit" value="Submit">
-        </form>
         </div>
+        <div class="log_controls">
+            <div>
+                <div>
+                    <label>Video</label>
+                    <input readonly name="video" value="{{video}}.mp4">
+                </div>
+                <div>
+                    <label>Talk Title</label>
+                    <input id="title" name="title" type="text"/>
+                </div>
+                <div>
+                    <label>Presenter</label>
+                    <input id="presenter" name="presenter" type="text"/>
+                </div>
+                <input type="submit" value="Send to Renderer"/>
+            </div>
+        </div>
+        </form>
         <button type="button" onclick="get_shuttle()">Connect to Shuttle controller</button><br/>
-        <button type="button" onclick="" class="help">?</button>
-        <div id="div-instructions">
+        <button type="button" onclick="show_help()" class="help">?</button>
+        <div id="instructions" class="help_dropdown">
             <h1>Instructions</h1>
             <p><b>Spacebar</b> to play/pause</p>
             <p><b>left</b> or <b>right</b> to go forwards/back one frame</p>

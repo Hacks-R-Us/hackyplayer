@@ -81,6 +81,14 @@ function enter_timecode(ele) {
     }
 }
 
+function show_help() {
+    if (document.getElementById("instructions").style.display != "block") {
+        document.getElementById("instructions").style.display = "block"
+    } else {
+        document.getElementById("instructions").style.display = "none"
+    }
+}
+
 function snap_to_timestamp (ele) {
     var time_match = ele.value.split(':').join('').match(/([\-\+])?(\d{1,8})/)
     if (time_match[1] == '+'){
@@ -95,7 +103,7 @@ function snap_to_timestamp (ele) {
 
 function updateTC(now, meta) {
     var frames = seconds_to_timestamp(meta.mediaTime)
-    document.getElementById("inputtc").value = frames
+    document.getElementById("current_tc").value = frames
     document.getElementById("video1").requestVideoFrameCallback(updateTC)
 };
 
