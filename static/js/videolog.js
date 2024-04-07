@@ -119,6 +119,9 @@ function checkKey(e) {
         } else {
             video.pause()
         }
+        if (e.target == document.body){
+            e.preventDefault();
+        }
     } else if(e.key == 'i') {
         bmi()
     } else if(e.key == 'o') {
