@@ -1,14 +1,28 @@
+# System
 import datetime
 import os
-from pathlib import Path
+import pathlib
 
-from flask import Flask, render_template, request
+# PIP
 import flask
 
+# Local
+import config
 import tasks
 
 app = tasks.flask_app
 app_cel = tasks.celery_app
+
+# Load default settings
+app.config.update(config.DEFAULT_CONFIG)
+
+# Load local settings
+try:
+    import config_local
+    app.config.update(config_local.CONFIG)
+except (ImportError, AttributeError):
+    pass
+
 
 def get_files(target):
     for file in sorted(os.listdir(target)):
@@ -20,17 +34,17 @@ def get_files(target):
 
 @app.route("/")
 def index():
-    sources = get_files("static/video/source")
-    outputs = get_files("static/video/output")
+    sources = get_files(app.config["VIDEO_SOURCE"])
+    outputs = get_files(app.config["VIDEO_OUTPUT"])
     running_tasks = app_cel.control.inspect().active()
     for name,host in running_tasks.items():
         for task in host:
             task["time_start"] = datetime.datetime.fromtimestamp(task["time_start"]).strftime('%Y-%m-%d %H:%M:%S')
-    return render_template("index.html", **locals())
+    return flask.render_template("index.html", **locals())
 
 @app.route("/log/<vid_dir>/<video>")
 def log(vid_dir, video):
-    return render_template("log.html", vid_dir=vid_dir, video=video)
+    return flask.render_template("log.html", vid_dir=vid_dir, video=video)
 
 @app.route("/build", methods=['POST'])
 def build_video():
@@ -39,10 +53,12 @@ def build_video():
         "presenter": "A. N. Other"
     }
     result = tasks.build_video.delay(
-        str(Path.joinpath(Path("static/video/source"), Path(request.form['video']))), 
+        str(pathlib.Path.joinpath(app.config["VIDEO_SOURCE"], pathlib.Path(flask.request.form['video']))), 
         talk_data, 
-        request.form['start_tc'], 
-        request.form['end_tc']
+        flask.request.form['start_tc'], 
+        flask.request.form['end_tc'],
+        out_dir = str(app.config["VIDEO_OUTPUT"]),
+        temp_dir = str(app.config["VIDEO_TEMP"])
     )
 
     return {"result_id": result.id}

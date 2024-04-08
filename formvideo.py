@@ -35,7 +35,7 @@ def timecode_to_timestamp(timecode, framerate = FRAMERATE):
     return "{:02d}:{:02d}:{:02d}.{:02d}".format(hours, minutes, seconds, int(frames*100/framerate))
 
 
-def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE):
+def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = OUT_DIR, temp_dir = TEMP_DIR):
 
     end_dur = 10
     end_fade = 2
@@ -48,12 +48,12 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE):
 
     fade_offset = end_s - start_s - 1
 
-    start_png = Path.joinpath(TEMP_DIR, Path("start.png"))
-    end_png = Path.joinpath(TEMP_DIR, Path("end.png"))
+    start_png = Path.joinpath(Path(temp_dir), Path("start.png"))
+    end_png = Path.joinpath(Path(temp_dir), Path("end.png"))
 
     output_file = Path(datetime.datetime.now().strftime("%Y%m%d-%H%M%S")+ ".mp4")
 
-    output_path = Path.joinpath(OUT_DIR, output_file)
+    output_path = Path.joinpath(Path(out_dir), output_file)
 
     start_lt_args = [
         IMAGEMAGICK_BIN, 

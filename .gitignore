@@ -2,3 +2,4 @@
 static/video
 __pycache__
 temp
+config_local.py
