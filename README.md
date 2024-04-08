@@ -6,7 +6,7 @@
 - Make the following directories:
   - <install_dir>/static/video/input
   - <install_dir>/static/video/output
-  - <install_dir>/teamp
+  - <install_dir>/temp
 
 # Running
 ## Development
