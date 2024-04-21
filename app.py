@@ -37,9 +37,12 @@ def index():
     sources = get_files(app.config["VIDEO_SOURCE"])
     outputs = get_files(app.config["VIDEO_OUTPUT"])
     running_tasks = app_cel.control.inspect().active()
-    for name,host in running_tasks.items():
-        for task in host:
-            task["time_start"] = datetime.datetime.fromtimestamp(task["time_start"]).strftime('%Y-%m-%d %H:%M:%S')
+    if running_tasks:
+        for name,host in running_tasks.items():
+            for task in host:
+                task["time_start"] = datetime.datetime.fromtimestamp(task["time_start"]).strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        running_tasks = {"": []}
     return flask.render_template("index.html", **locals())
 
 @app.route("/log/<vid_dir>/<video>")
