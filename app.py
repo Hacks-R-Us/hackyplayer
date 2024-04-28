@@ -23,19 +23,20 @@ try:
 except (ImportError, AttributeError):
     pass
 
-
-def get_files(target):
+def get_files(target, ext_filter = []):
     for file in sorted(os.listdir(target)):
         path = os.path.join(target, file)
         if os.path.isfile(path):
-            yield (
-                os.path.splitext(file)[0]
-            )
+            if os.path.splitext(file)[1] in ext_filter or ext_filter == []:
+                yield (
+                    os.path.splitext(file)[0]
+                )
 
 @app.route("/")
 def index():
-    sources = get_files(app.config["VIDEO_SOURCE"])
-    outputs = get_files(app.config["VIDEO_OUTPUT"])
+    sources = get_files(app.config["VIDEO_SOURCE"], ext_filter = [".mp4"])
+    outputs = get_files(app.config["VIDEO_OUTPUT"], ext_filter = [".mp4"])
+    live = get_files(app.config["VIDEO_LIVE"], ext_filter = [".mpd"])
     running_tasks = app_cel.control.inspect().active()
     if running_tasks:
         for name,host in running_tasks.items():
@@ -47,7 +48,12 @@ def index():
 
 @app.route("/log/<vid_dir>/<video>")
 def log(vid_dir, video):
-    return flask.render_template("log.html", vid_dir=vid_dir, video=video)
+    print(vid_dir)
+    if vid_dir == "live":
+        vid_dash = True
+    else:
+        vid_dash = False
+    return flask.render_template("log.html", vid_dash=vid_dash, vid_dir=vid_dir, video=video)
 
 @app.route("/build", methods=['POST'])
 def build_video():

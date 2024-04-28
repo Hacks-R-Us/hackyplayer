@@ -90,6 +90,7 @@ function show_help() {
 }
 
 function snap_to_timestamp (ele) {
+    console.log(document.getElementById("video1").currentTime)
     var time_match = ele.value.split(':').join('').match(/([\-\+])?(\d{1,8})/)
     if (time_match[1] == '+'){
         var new_time = document.getElementById("video1").currentTime + timestamp_to_seconds(time_match[2])
@@ -99,6 +100,7 @@ function snap_to_timestamp (ele) {
         var new_time = timestamp_to_seconds(time_match[2])
     }
     document.getElementById("video1").currentTime = new_time
+    console.log(new_time)
 }
 
 function updateTC(now, meta) {

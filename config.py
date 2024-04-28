@@ -8,6 +8,7 @@ import flask
 DEFAULT_CONFIG = {
     "VIDEO_SOURCE": pathlib.Path("static/video/source"),
     "VIDEO_OUTPUT": pathlib.Path("static/video/output"),
+    "VIDEO_LIVE": pathlib.Path("static/video/live"),
     "VIDEO_TEMP": pathlib.Path("temp")
 }
 

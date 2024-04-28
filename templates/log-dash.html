@@ -1,6 +1,6 @@
 <html>
     <head>
-        <script src="{{url_for('static', filename='js/videolog.js')}}"></script>
+        <script src="{{url_for('static', filename='js/videolog-dash.js')}}"></script>
         <link rel="stylesheet" href="{{url_for('static', filename='css/base.css')}}">
         <link rel="stylesheet" href="{{url_for('static', filename='css/log.css')}}">
     </head>
@@ -9,12 +9,7 @@
             <div class="vid_controls">
                 <div>
                     <div>
-                        <video id="video1" controls>
-                            {% if not vid_dash %}
-                            <source src="/static/video/{{ vid_dir }}/{{ video }}.mp4" type="video/mp4">
-                            {% endif %}
-                            Your browser does not support the video tag.
-                        </video>
+                        <video id="video1" controls></video>
                         <input id="inputtc" type="text" onkeydown="enter_timecode(this)" onfocus="tc_focus(this)" onblur="tc_focus_off(this)" class="timecode"/>
                     </div>
                     <div class="row">
@@ -76,16 +71,5 @@
             <p><b>-00001000</b> or <b>-1000</b> to skip backwards by a specific timecode (<i>00:00:10:00</i> in this case)</p>
             <img src="{{url_for('static', filename='img/shuttle-controls.png')}}" alt="Contour Shuttle controls"/>
         </div>
-        {% if vid_dash %}
-        <script src="{{url_for('static', filename='js/dash.all.min.js')}}"></script>
-        <script>
-            (function(){
-                var url = "https://vs-cmaf-pushb-uk.live.cf.md.bbci.co.uk/x=4/i=urn:bbc:pips:service:red_button_one/pc_hd_abr_v2.mpd";
-                //var url = "/static/video/{{ vid_dir }}/{{ video }}.mpd";
-                var player = dashjs.MediaPlayer().create();
-                player.initialize(document.querySelector("#video1"), url, false);
-            })();
-        </script>
-        {% endif %}
     </body>
 </html>

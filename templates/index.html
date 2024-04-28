@@ -11,6 +11,14 @@
           </tr>
           {% endfor -%}
         </table>
+        <h1>Live streams</h1>
+        <table>
+          {% for filename in live -%}
+          <tr>
+            <td><a href="/log/live/{{ filename }}" >{{ filename }}</a></td>
+          </tr>
+          {% endfor -%}
+        </table>
         <h1>Outputs</h1>
         <table>
           {% for filename in outputs -%}
