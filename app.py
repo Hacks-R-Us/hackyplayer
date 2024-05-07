@@ -58,9 +58,10 @@ def log(vid_dir, video):
 
 @app.route("/build", methods=['POST'])
 def build_video():
+
     talk_data = {
-        "title": "This is a talk",
-        "presenter": "A. N. Other"
+        "title": flask.request.form['title'],
+        "presenter": flask.request.form['presenter']
     }
     vid_dir = pathlib.Path(flask.request.form['video']).parts[0]
     vid = pathlib.Path(flask.request.form['video']).parts[1]
