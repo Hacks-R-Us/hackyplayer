@@ -48,12 +48,13 @@ def index():
 
 @app.route("/log/<vid_dir>/<video>")
 def log(vid_dir, video):
-    print(vid_dir)
     if vid_dir == "live":
-        vid_dash = True
+        vid_type = "dash"
+        vid_ext = "mpd"
     else:
-        vid_dash = False
-    return flask.render_template("log.html", vid_dash=vid_dash, vid_dir=vid_dir, video=video)
+        vid_type = "mp4"
+        vid_ext = "mp4"
+    return flask.render_template("log.html", **locals())
 
 @app.route("/build", methods=['POST'])
 def build_video():
@@ -61,8 +62,10 @@ def build_video():
         "title": "This is a talk",
         "presenter": "A. N. Other"
     }
+    vid_dir = pathlib.Path(flask.request.form['video']).parts[0]
+    vid = pathlib.Path(flask.request.form['video']).parts[1]
     result = tasks.build_video.delay(
-        str(pathlib.Path.joinpath(app.config["VIDEO_SOURCE"], pathlib.Path(flask.request.form['video']))), 
+        str(pathlib.Path.joinpath(app.config["VIDEO_{}".format(vid_dir).upper()], vid)), 
         talk_data, 
         flask.request.form['start_tc'], 
         flask.request.form['end_tc'],

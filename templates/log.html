@@ -10,7 +10,7 @@
                 <div>
                     <div>
                         <video id="video1" controls>
-                            {% if not vid_dash %}
+                            {% if vid_type == "mp4" %}
                             <source src="/static/video/{{ vid_dir }}/{{ video }}.mp4" type="video/mp4">
                             {% endif %}
                             Your browser does not support the video tag.
@@ -46,7 +46,7 @@
                 <div>
                     <div>
                         <label>Video</label>
-                        <input readonly name="video" value="{{video}}.mp4">
+                        <input readonly name="video" value="{{ vid_dir }}/{{ video }}.{{ vid_ext }}">
                     </div>
                     <div>
                         <label>Talk Title</label>
@@ -76,15 +76,24 @@
             <p><b>-00001000</b> or <b>-1000</b> to skip backwards by a specific timecode (<i>00:00:10:00</i> in this case)</p>
             <img src="{{url_for('static', filename='img/shuttle-controls.png')}}" alt="Contour Shuttle controls"/>
         </div>
-        {% if vid_dash %}
+        {% if vid_type == "dash" %}
         <script src="{{url_for('static', filename='js/dash.all.min.js')}}"></script>
         <script>
             (function(){
-                var url = "https://vs-cmaf-pushb-uk.live.cf.md.bbci.co.uk/x=4/i=urn:bbc:pips:service:red_button_one/pc_hd_abr_v2.mpd";
-                //var url = "/static/video/{{ vid_dir }}/{{ video }}.mpd";
+                //var url = "https://vs-cmaf-pushb-uk.live.cf.md.bbci.co.uk/x=4/i=urn:bbc:pips:service:red_button_one/pc_hd_abr_v2.mpd";
+                var url = "/static/video/{{ vid_dir }}/{{ video }}.mpd";
                 var player = dashjs.MediaPlayer().create();
                 player.initialize(document.querySelector("#video1"), url, false);
             })();
+        </script>
+        {% endif %}
+        {% if vid_type == "hls" %}
+        <script src="{{url_for('static', filename='js/hls.min.js')}}"></script>
+        <script>
+            var video = document.getElementById('video1');
+            var hls = new Hls();
+            hls.loadSource("/static/video/{{ vid_dir }}/{{ video }}.m3u8");
+            hls.attachMedia(video);
         </script>
         {% endif %}
     </body>
