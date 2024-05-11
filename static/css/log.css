@@ -32,3 +32,34 @@ input#inputtc:focus {
     z-index: 1;
     opacity: 1;
 }
+
+.fadeIn {
+    animation: fadeIn ease 5s;
+    background-color: #73bd45;
+    opacity: 0;
+    width: 100%;
+    position: relative;
+    z-index: 10;
+    left: 50%;
+    margin-top: -60px;
+    margin-left: -90px;
+    align-self: center;
+    align-content: center;
+    text-align: center;
+  }
+  
+  
+  @keyframes fadeIn{
+    0% {
+      opacity:0;
+    }
+    25% {
+      opacity:1;
+    }
+    75% {
+      opacity:1;
+    }
+    100% {
+      opacity:0;
+    }
+  }

@@ -46,7 +46,7 @@
                 <div>
                     <div>
                         <label>Video</label>
-                        <input readonly name="video" value="{{ vid_dir }}/{{ video }}.{{ vid_ext }}">
+                        <input readonly id="video_id" name="video" value="{{ vid_dir }}/{{ video }}.{{ vid_ext }}">
                     </div>
                     <div>
                         <label>Talk Title</label>
@@ -57,7 +57,8 @@
                         <input id="presenter" name="presenter" type="text"/>
                     </div>
                     <div class="fisher-price">
-                        <input type="submit" value="Send to Renderer"/>
+                        <input type="button" onclick="send_to_renderer()" value="Send to Renderer"/>
+                        <!--<input type="submit" value="Send to Renderer"/>-->
                         <button type="button" onclick="get_shuttle()">Connect to Shuttle controller</button><br/>
                     </div>
                     
@@ -96,5 +97,8 @@
             hls.attachMedia(video);
         </script>
         {% endif %}
+        <div id="infopopup">
+            
+        </div>
     </body>
 </html>

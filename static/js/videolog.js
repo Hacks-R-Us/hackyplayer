@@ -220,3 +220,41 @@ function get_shuttle() {
 function display_help() {
 
 }
+
+function send_to_renderer(){
+
+    var data = new FormData();
+    data.append('start_tc', document.getElementById("intc").value);
+    data.append('end_tc', document.getElementById("outtc").value);
+    data.append('presenter', document.getElementById("presenter").value);
+    data.append('title', document.getElementById("title").value);
+    data.append('video', document.getElementById("video_id").value);
+
+    var params = new Object();
+    params.intc = document.getElementById("intc").value;
+    params.outtc = document.getElementById("outtc").value;
+    params.presenter = document.getElementById("presenter").value;
+    params.title = document.getElementById("title").value;
+    params.video = document.getElementById("video_id").value;
+
+    // Turn the data object into an array of URL-encoded key/value pairs.
+    let urlEncodedData = "", urlEncodedDataPairs = [], name;
+    for( name in params ) {
+        urlEncodedDataPairs.push(encodeURIComponent(name)+'='+encodeURIComponent(params[name]));
+    }
+
+    // Send video for processing!
+    var xhttp = new XMLHttpRequest();
+
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+        document.getElementById("infopopup").innerHTML = "New job ID: " + JSON.parse(xhttp.responseText)['result_id'];
+        document.getElementById("infopopup").classList.add('fadeIn')
+        }
+    };
+
+    xhttp.open("POST", "/build", true);
+    //xhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xhttp.send(data);
+}
+
