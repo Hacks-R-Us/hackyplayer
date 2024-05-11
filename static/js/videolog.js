@@ -249,7 +249,9 @@ function send_to_renderer(){
     xhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
         document.getElementById("infopopup").innerHTML = "New job ID: " + JSON.parse(xhttp.responseText)['result_id'];
-        document.getElementById("infopopup").classList.add('fadeIn')
+        document.getElementById("infopopup").classList.remove('fadeIn')
+        setTimeout(function() {document.getElementById("infopopup").classList.add('fadeIn')}, 100)
+        
         }
     };
 
