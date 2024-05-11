@@ -56,12 +56,12 @@ function timestamp_to_seconds (timestamp) {
     var time_array = timestamp.padStart(8, "0").match(/(.{2})(.{2})(.{2})(.{2})/)
     var hours = parseInt(time_array[1])
     var mins = parseInt(time_array[2])
-    if (mins > 60){
-        mins = 60
+    if (mins > 59){
+        mins = 59
     }
     var secs = parseInt(time_array[3])
-    if (secs > 60) {
-        secs = 60
+    if (secs > 59) {
+        secs = 59
     }
     var frames = parseInt(time_array[4])
     if (frames > framerate){
@@ -217,10 +217,6 @@ function get_shuttle() {
     });
 }
 
-function display_help() {
-
-}
-
 function send_to_renderer(){
 
     var data = new FormData();
@@ -230,33 +226,44 @@ function send_to_renderer(){
     data.append('title', document.getElementById("title").value);
     data.append('video', document.getElementById("video_id").value);
 
-    var params = new Object();
-    params.intc = document.getElementById("intc").value;
-    params.outtc = document.getElementById("outtc").value;
-    params.presenter = document.getElementById("presenter").value;
-    params.title = document.getElementById("title").value;
-    params.video = document.getElementById("video_id").value;
+    document.getElementById("intc").classList.remove('invalid')
+    document.getElementById("outtc").classList.remove('invalid')
+    document.getElementById("presenter").classList.remove('invalid')
+    document.getElementById("title").classList.remove('invalid')
 
-    // Turn the data object into an array of URL-encoded key/value pairs.
-    let urlEncodedData = "", urlEncodedDataPairs = [], name;
-    for( name in params ) {
-        urlEncodedDataPairs.push(encodeURIComponent(name)+'='+encodeURIComponent(params[name]));
+    // Validation
+    var valid = true;
+    if (!data.get('start_tc')){
+        setTimeout(function() {document.getElementById("intc").classList.add('invalid')}, 100)
+        valid = false
+    } if (!data.get('end_tc')) {
+        setTimeout(function() {document.getElementById("outtc").classList.add('invalid')}, 100)
+        valid = false
+    } if (data.get('start_tc') && data.get('end_tc') && timestamp_to_seconds(data.get('start_tc').replace(/\:/g,'')) >= timestamp_to_seconds(data.get('end_tc').replace(/\:/g,''))){
+        setTimeout(function() {document.getElementById("intc").classList.add('invalid')}, 100)
+        setTimeout(function() {document.getElementById("outtc").classList.add('invalid')}, 100)
+        valid = false
+    } if (!data.get('presenter')) {
+        setTimeout(function() {document.getElementById("presenter").classList.add('invalid')}, 100)
+        valid = false
+    } if (!data.get('title')){
+        setTimeout(function() {document.getElementById("title").classList.add('invalid')}, 100)
+        valid = false
     }
+    
+    if (valid) {
+        // All good - send video for processing!
+        var xhttp = new XMLHttpRequest();
 
-    // Send video for processing!
-    var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+            document.getElementById("infopopup").innerHTML = "New job ID: " + JSON.parse(xhttp.responseText)['result_id'];
+            document.getElementById("infopopup").classList.remove('fadeIn')
+            setTimeout(function() {document.getElementById("infopopup").classList.add('fadeIn')}, 100)
+            }
+        };
 
-    xhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-        document.getElementById("infopopup").innerHTML = "New job ID: " + JSON.parse(xhttp.responseText)['result_id'];
-        document.getElementById("infopopup").classList.remove('fadeIn')
-        setTimeout(function() {document.getElementById("infopopup").classList.add('fadeIn')}, 100)
-        
-        }
-    };
-
-    xhttp.open("POST", "/build", true);
-    //xhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    xhttp.send(data);
+        xhttp.open("POST", "/build", true);
+        xhttp.send(data);
+    }
 }
-

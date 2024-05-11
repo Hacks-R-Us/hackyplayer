@@ -44,19 +44,34 @@ input#inputtc:focus {
 }
 
 .fadeIn {
-    animation: fadeIn ease 5s;
+  animation: fadeIn ease 5s;
+}
+@keyframes fadeIn{
+  0% {
+    opacity:0;
   }
-  @keyframes fadeIn{
-    0% {
-      opacity:0;
-    }
-    25% {
-      opacity:1;
-    }
-    75% {
-      opacity:1;
-    }
-    100% {
-      opacity:0;
-    }
+  25% {
+    opacity:1;
   }
+  75% {
+    opacity:1;
+  }
+  100% {
+    opacity:0;
+  }
+}
+
+.invalid {
+  background-color: #ffffff;
+  border-color: #f48120;
+  animation: invalid ease 3s;
+}
+
+@keyframes invalid {
+  0% {
+    background-color: #ea1a5b;
+  }
+  100% {
+      background-color: #ffffff;
+  }
+}
