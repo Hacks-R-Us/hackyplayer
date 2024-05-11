@@ -90,7 +90,6 @@ function show_help() {
 }
 
 function snap_to_timestamp (ele) {
-    console.log(document.getElementById("video1").currentTime)
     var time_match = ele.value.split(':').join('').match(/([\-\+])?(\d{1,8})/)
     if (time_match[1] == '+'){
         var new_time = document.getElementById("video1").currentTime + timestamp_to_seconds(time_match[2])
@@ -100,7 +99,6 @@ function snap_to_timestamp (ele) {
         var new_time = timestamp_to_seconds(time_match[2])
     }
     document.getElementById("video1").currentTime = new_time
-    console.log(new_time)
 }
 
 function updateTC(now, meta) {
@@ -115,6 +113,17 @@ function frameevent() {
 
 function checkKey(e) {
     e = e || window.event;
+
+    // Don't do controls if a text input field or main video
+    const nopropElements = [
+        document.getElementById("presenter"),
+        document.getElementById("title"),
+        document.getElementById("video1")
+    ]
+    if (nopropElements.indexOf(document.activeElement) != -1){
+        return
+    }
+
     const nums = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "-"]
     if (e.key == 'ArrowLeft') {
         bfb()
@@ -204,16 +213,16 @@ function get_shuttle() {
     navigator.hid.addEventListener("disconnect", handleDisconnectedDevice);
 
     navigator.hid.requestDevice(requestParams).then((devices) => {
-    if (devices.length == 0) return;
-    devices.forEach((device) => {
-        device.open().then()
-        console.log("Opened device: " + device.productName);
-        device.addEventListener("inputreport", handleInputReport);
-        device.sendReport(outputReportId, outputReport).then(() => {
-        console.log("Sent output report " + outputReportId);
-        setInterval(scrub_via_wheel,20);
+        if (devices.length == 0) return;
+        devices.forEach((device) => {
+            device.open().then()
+            console.log("Opened device: " + device.productName);
+            device.addEventListener("inputreport", handleInputReport);
+            device.sendReport(outputReportId, outputReport).then(() => {
+            console.log("Sent output report " + outputReportId);
+            setInterval(scrub_via_wheel,20);
+            });
         });
-    });
     });
 }
 
