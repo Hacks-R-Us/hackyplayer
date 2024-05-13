@@ -47,7 +47,20 @@
                 <div>
                     <div>
                         <label>Video</label>
-                        <input readonly id="video_id" name="video" value="{{ vid_dir }}/{{ video }}.{{ vid_ext }}">
+                        <input readonly class="readonly" id="video_id" name="video" value="{{ vid_dir }}/{{ video }}.{{ vid_ext }}">
+                    </div>
+                    <div>
+                        <label>Predefined talk</label>
+                        <select name="talk" id="talk" onchange="talk_select(this)">
+                            <option value="-1">Choose a talk...</option>
+                            {% for talk in talks_sorted %}
+                            <option value={{talk}}>{{talks[talk].title}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label>Talk ID</label>
+                        <input id="talkid" name="talkid" type="text"/>
                     </div>
                     <div>
                         <label>Talk Title</label>
@@ -97,5 +110,8 @@
             hls.attachMedia(video);
         </script>
         {% endif %}
+        <script id="talkdata" type="application/json">
+            {{ talks_json|safe }}
+        </script>
     </body>
 </html>

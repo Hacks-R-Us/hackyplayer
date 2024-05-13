@@ -51,7 +51,10 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
     start_png = Path.joinpath(Path(temp_dir), Path("start.png"))
     end_png = Path.joinpath(Path(temp_dir), Path("end.png"))
 
-    output_file = Path(datetime.datetime.now().strftime("%Y%m%d-%H%M%S")+ ".mp4")
+    try:
+        output_file = Path(talk["filename"] + "-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")+ ".mp4")
+    except KeyError:
+        output_file = Path(datetime.datetime.now().strftime("%Y%m%d-%H%M%S")+ ".mp4")
 
     output_path = Path.joinpath(Path(out_dir), output_file)
 

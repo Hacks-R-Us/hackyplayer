@@ -234,11 +234,13 @@ function send_to_renderer(){
     data.append('presenter', document.getElementById("presenter").value);
     data.append('title', document.getElementById("title").value);
     data.append('video', document.getElementById("video_id").value);
+    data.append('talkid', document.getElementById("talkid").value);
 
     document.getElementById("intc").classList.remove('invalid')
     document.getElementById("outtc").classList.remove('invalid')
     document.getElementById("presenter").classList.remove('invalid')
     document.getElementById("title").classList.remove('invalid')
+    document.getElementById("talkid").classList.remove('invalid')
 
     // Validation
     var valid = true;
@@ -258,6 +260,9 @@ function send_to_renderer(){
     } if (!data.get('title')){
         setTimeout(function() {document.getElementById("title").classList.add('invalid')}, 100)
         valid = false
+    } if (!data.get('talkid')){
+        setTimeout(function() {document.getElementById("talkid").classList.add('invalid')}, 100)
+        valid = false
     }
     
     if (valid) {
@@ -274,5 +279,30 @@ function send_to_renderer(){
 
         xhttp.open("POST", "/build", true);
         xhttp.send(data);
+    }
+}
+
+function talk_select(e) {
+    var talkdata = JSON.parse(document.getElementById('talkdata').textContent);
+    if (e.value == -1) {
+        document.getElementById('talkid').value = ""
+        document.getElementById('talkid').readOnly = false;
+        document.getElementById('talkid').classList.remove('readonly')
+        document.getElementById('title').value = ""
+        document.getElementById('title').readOnly = false;
+        document.getElementById('title').classList.remove('readonly')
+        document.getElementById('presenter').value = ""
+        document.getElementById('presenter').readOnly = false;
+        document.getElementById('presenter').classList.remove('readonly')
+    } else {
+        document.getElementById('title').value = talkdata[e.value]["title"]
+        document.getElementById('title').readOnly = true;
+        document.getElementById('title').classList.add('readonly')
+        document.getElementById('presenter').value = talkdata[e.value]["presenter"]
+        document.getElementById('presenter').readOnly = true;
+        document.getElementById('presenter').classList.add('readonly')
+        document.getElementById('talkid').value = e.value
+        document.getElementById('talkid').readOnly = true;
+        document.getElementById('talkid').classList.add('readonly')
     }
 }
