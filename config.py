@@ -6,10 +6,28 @@ import celery
 import flask
 
 DEFAULT_CONFIG = {
-    "VIDEO_SOURCE": pathlib.Path("static/video/source"),
-    "VIDEO_OUTPUT": pathlib.Path("static/video/output"),
-    "VIDEO_LIVE": pathlib.Path("static/video/live"),
-    "VIDEO_TEMP": pathlib.Path("temp")
+    "VIDEO_SOURCES": [{
+        "DISKDIR": pathlib.Path("static/video/source"),
+        "WEBDIR": "source",
+        "EXT": [".mp4"],
+        "NAME": "Source"
+        }, {
+        "DISKDIR": pathlib.Path("static/video/output"),
+        "WEBDIR": "output",
+        "EXT": [".mp4"],
+        "NAME": "Output"
+        }, {
+        "DISKDIR": pathlib.Path("static/video/live"),
+        "WEBDIR": "live",
+        "EXT": [".mpd"],
+        "NAME": "Live"
+        }],
+    "VIDEO_TEMP": pathlib.Path("temp"),
+    "WATCHFOLDERS": [{
+        "NAME": "input",
+        "FULLPATH": pathlib.Path("static/video/input"),
+        "OUTPUT_DIR": pathlib.Path("static/video/source")
+    }]
 }
 
 def celery_init_app(app):
@@ -30,7 +48,7 @@ def create_app():
         CELERY=dict(
             broker_url="redis://localhost",
             result_backend="redis://localhost",
-            task_ignore_result=True,
+            task_ignore_result=False,
         ),
     )
     app.config.from_prefixed_env()

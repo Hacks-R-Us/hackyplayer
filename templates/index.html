@@ -1,30 +1,16 @@
 {% include 'head.html' %}
     </head>
     <body>
-        <h1>Sources</h1>
+        {% for directory in files -%}
+        <h1>{{ directory.name }}</h1>
         <table>
-          {% for filename in sources -%}
+          {% for filename in directory.files -%}
           <tr>
-            <td><a href="/log/source/{{ filename }}" >{{ filename }}</a></td>
+            <td><a href="/log/{{ directory.dir }}/{{ filename }}" >{{ filename }}</a></td>
           </tr>
           {% endfor -%}
         </table>
-        <h1>Live streams</h1>
-        <table>
-          {% for filename in live -%}
-          <tr>
-            <td><a href="/log/live/{{ filename }}" >{{ filename }}</a></td>
-          </tr>
-          {% endfor -%}
-        </table>
-        <h1>Outputs</h1>
-        <table>
-          {% for filename in outputs -%}
-          <tr>
-            <td><a href="/log/output/{{ filename }}" >{{ filename }}</a></td>
-          </tr>
-          {% endfor -%}
-        </table>
+        {% endfor -%}
         <h1>Running Tasks</h1>
         <table>
           <thead>

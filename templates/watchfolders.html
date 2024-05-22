@@ -1,0 +1,112 @@
+{% include 'head.html' %}
+        <link href="static/css/datatables.min.css" rel="stylesheet">
+        <script src="static/js/datatables.min.js"></script>
+        <script>
+            $(document).ready( function () {
+                // Setup Watchfolder table
+                var watchtable = $('#watchtable').DataTable( {
+                    ajax: '/api/v1/watch',
+                    columns: [
+                        { data: 'time_start' },
+                        { data: 'id' },
+                        { data: 'name' },
+                        { data: 'folder' },
+                        { data: 'node' },
+                        { data: null}
+                    ],
+                    columnDefs: [
+                        {
+                            data: null,
+                            defaultContent: '<button id=bstart>Start</button><button id=bend>Stop</button>',
+                            targets: -1
+                        }
+                    ]
+                } );
+
+                // 
+
+                watchtable.on('click', 'button', function (e) {
+                    let data = watchtable.row(e.target.closest('tr')).data();
+
+                    var xhttp = new XMLHttpRequest();
+                    if (e.target.id == "bstart") {
+                        xhttp.open("PUT", "/api/v1/watch/"+data["name"], true);
+                    } else if (e.target.id == "bend") {
+                        xhttp.open("DELETE", "/api/v1/watch/"+data["name"], true);
+                    }
+                    xhttp.send();
+
+                    watchtable.ajax.reload(null, false);
+                });
+
+                // Setup Ingest table
+                var ingesttable = $('#ingesttable').DataTable( {
+                    ajax: '/api/v1/ingest',
+                    columns: [
+                        { data: 'time_start' },
+                        { data: 'id' },
+                        { data: 'input' },
+                        { data: 'node' },
+                        { data: null}
+                    ],
+                    columnDefs: [
+                        {
+                            data: null,
+                            defaultContent: '<button id=bend>Stop</button>',
+                            targets: -1
+                        }
+                    ]
+                } );
+
+                ingesttable.on('click', 'button', function (e) {
+                    let data = ingesttable.row(e.target.closest('tr')).data();
+
+                    var xhttp = new XMLHttpRequest();
+                    if (e.target.id == "bend") {
+                        xhttp.open("DELETE", "/api/v1/ingest/"+data["id"], true);
+                    }
+                    xhttp.send();
+
+                    ingesttable.ajax.reload(null, false);
+                });
+
+                // Automatic refresh
+                setInterval(function () {
+                    ingesttable.ajax.reload(null, false);
+                }, 5000);
+
+                setInterval(function () {
+                    watchtable.ajax.reload(null, false);
+                }, 5000);
+            } );
+        </script>
+    </head>
+    <body>
+        <h1>Running Watchfolders</h1>
+        <table id="watchtable">
+            <thead>
+                <tr>
+                  <th>Task start time</th>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Folder</th>
+                  <th>Worker node</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+        </table>
+
+        <h1>Running Ingest Tasks</h1>
+        <table id="ingesttable">
+            <thead>
+                <tr>
+                  <th>Task start time</th>
+                  <th>ID</th>
+                  <th>Ingest file</th>
+                  <th>Worker node</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+        </table>
+    </body>
+</html>

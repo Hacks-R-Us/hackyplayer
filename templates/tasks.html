@@ -1,0 +1,42 @@
+{% include 'head.html' %}
+        <link href="static/css/datatables.min.css" rel="stylesheet">
+        <script src="static/js/datatables.min.js"></script>
+        <script>
+            $(document).ready( function () {
+                var table = $('#tasktable').DataTable( {
+                    ajax: '/api/v1/tasks',
+                    columns: [
+                        { data: 'time_start' },
+                        { data: 'id' },
+                        { data: 'source' },
+                        { data: 'title' },
+                        { data: 'presenter' },
+                        { data: 'in_tc' },
+                        { data: 'out_tc' },
+                        { data: 'node' }
+                    ]
+                } );
+                setInterval(function () {
+                    table.ajax.reload(null, false);
+                }, 30000);
+            } );
+        </script>
+    </head>
+    <body>
+        <h1>Running Tasks</h1>
+        <table id="tasktable">
+            <thead>
+                <tr>
+                  <th>Task start time</th>
+                  <th>ID</th>
+                  <th>Source file</th>
+                  <th>Talk Title</th>
+                  <th>Talk Presenter</th>
+                  <th>Video Start TC</th>
+                  <th>Video End TC</th>
+                  <th>Worker node</th>
+                </tr>
+              </thead>
+        </table>
+    </body>
+</html>
