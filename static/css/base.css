@@ -20,6 +20,22 @@ div.fisher-price>button:nth-of-type(4n) {
 	background-color: #0862ad;
 }
 
+div.fisher-price>a:nth-of-type(4n+1) {
+	background-color: #ea1a5b;
+}
+
+div.fisher-price>a:nth-of-type(4n+2) {
+	background-color: #f48120;
+}
+
+div.fisher-price>a:nth-of-type(4n+3) {
+	background-color: #73bd45;
+}
+
+div.fisher-price>a:nth-of-type(4n) {
+	background-color: #0862ad;
+}
+
 table {
     text-align: left
 }
@@ -69,4 +85,59 @@ div.row {
 div.help_dropdown {
     transition: height 2s, display 2s;
     display:none;
+}
+
+.sidebar {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    overflow-x: hidden;
+    padding-top: 60px;
+    transition: 0.5s;
+    background-color: #707070;
+  }
+  
+  .sidebar a {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 25px;
+    display: block;
+    transition: 0.3s;
+  }
+  
+  .sidebar a.active {
+    background-color: #04AA6D;
+    color: white;
+  }
+  
+  .sidebar a:hover:not(.active) {
+    background-color: #555;
+    color: white;
+  }
+
+  .sidebar .closebtn {
+    position: absolute;
+    top: 0;
+    left: 0px;
+    font-size: 24px;
+  }
+  
+  div.content {
+    transition: margin-left .5s;
+    padding: 20px;
+  }
+  
+  @media screen and (max-width: 400px) {
+    .sidebar {padding-top: 15px;}
+    .sidebar a {font-size: 18px;}
+  }
+
+div.hamburger>div {
+    width: 35px;
+    height: 5px;
+    background-color: black;
+    margin: 6px 0;
 }

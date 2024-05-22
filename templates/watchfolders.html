@@ -82,31 +82,34 @@
         </script>
     </head>
     <body>
-        <h1>Running Watchfolders</h1>
-        <table id="watchtable">
-            <thead>
-                <tr>
-                  <th>Task start time</th>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Folder</th>
-                  <th>Worker node</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-        </table>
+        {% include 'sidebar.html' %}
+        <div id="main" class="content">
+            <h1>Running Watchfolders</h1>
+            <table id="watchtable">
+                <thead>
+                    <tr>
+                    <th>Task start time</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Folder</th>
+                    <th>Worker node</th>
+                    <th>Actions</th>
+                    </tr>
+                </thead>
+            </table>
 
-        <h1>Running Ingest Tasks</h1>
-        <table id="ingesttable">
-            <thead>
-                <tr>
-                  <th>Task start time</th>
-                  <th>ID</th>
-                  <th>Ingest file</th>
-                  <th>Worker node</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-        </table>
+            <h1>Running Ingest Tasks</h1>
+            <table id="ingesttable">
+                <thead>
+                    <tr>
+                    <th>Task start time</th>
+                    <th>ID</th>
+                    <th>Ingest file</th>
+                    <th>Worker node</th>
+                    <th>Actions</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
     </body>
 </html>

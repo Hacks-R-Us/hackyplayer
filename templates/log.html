@@ -3,113 +3,116 @@
         <link rel="stylesheet" href="{{url_for('static', filename='css/log.css')}}">
     </head>
     <body>
-        <form action="/build", method="post">
-            <div id="infopopup" ></div>
-            <div class="vid_controls">
-                <div>
+        {% include 'sidebar.html' %}
+        <div id="main" class="content">
+            <form action="/build", method="post">
+                <div id="infopopup" ></div>
+                <div class="vid_controls">
                     <div>
-                        <video id="video1" controls>
-                            {% if vid_type == "mp4" %}
-                            <source src="/static/video/{{ vid_dir }}/{{ video }}.mp4" type="video/mp4">
-                            {% endif %}
-                            Your browser does not support the video tag.
-                        </video>
-                        <input id="inputtc" type="text" onkeydown="enter_timecode(this)" onfocus="tc_focus(this)" onblur="tc_focus_off(this)" class="timecode"/>
-                    </div>
-                    <div class="row">
-                        <div class="column">
-                            <label>In</label>
-                            <input id="intc" name="start_tc" type="text" class="timecode"/>
+                        <div>
+                            <video id="video1" controls>
+                                {% if vid_type == "mp4" %}
+                                <source src="/static/video/{{ vid_dir }}/{{ video }}.mp4" type="video/mp4">
+                                {% endif %}
+                                Your browser does not support the video tag.
+                            </video>
+                            <input id="inputtc" type="text" onkeydown="enter_timecode(this)" onfocus="tc_focus(this)" onblur="tc_focus_off(this)" class="timecode"/>
                         </div>
-                        <div class="column">
-                            <label>Current</label>
-                            <input disabled id="current_tc" type="text" class="timecode"/>
+                        <div class="row">
+                            <div class="column">
+                                <label>In</label>
+                                <input id="intc" name="start_tc" type="text" class="timecode"/>
+                            </div>
+                            <div class="column">
+                                <label>Current</label>
+                                <input disabled id="current_tc" type="text" class="timecode"/>
+                            </div>
+                            <div class="column">
+                                <label>Out</label>
+                                <input id="outtc" name="end_tc" type="text" class="timecode"/>
+                            </div>
                         </div>
-                        <div class="column">
-                            <label>Out</label>
-                            <input id="outtc" name="end_tc" type="text" class="timecode"/>
+                        <div class="row fisher-price">
+                            <button type="button" onclick="bmi()">Mark In</button>
+                            <button type="button" onclick="bgi()">|&lt</button>
+                            <button type="button" onclick="bfb()">&lt;</button>
+                            <button type="button" onclick="bpp()">&#9658;</button>
+                            <button type="button" onclick="bff()">&gt;</button>
+                            <button type="button" onclick="bgo()">&gt|</button>
+                            <button type="button" onclick="bmo()">Mark Out</button>
                         </div>
-                    </div>
-                    <div class="row fisher-price">
-                        <button type="button" onclick="bmi()">Mark In</button>
-                        <button type="button" onclick="bgi()">|&lt</button>
-                        <button type="button" onclick="bfb()">&lt;</button>
-                        <button type="button" onclick="bpp()">&#9658;</button>
-                        <button type="button" onclick="bff()">&gt;</button>
-                        <button type="button" onclick="bgo()">&gt|</button>
-                        <button type="button" onclick="bmo()">Mark Out</button>
                     </div>
                 </div>
-            </div>
-            <div class="log_controls">
-                <div>
+                <div class="log_controls">
                     <div>
-                        <label>Video</label>
-                        <input readonly class="readonly" id="video_id" name="video" value="{{ vid_dir }}/{{ video }}.{{ vid_ext }}">
+                        <div>
+                            <label>Video</label>
+                            <input readonly class="readonly" id="video_id" name="video" value="{{ vid_dir }}/{{ video }}.{{ vid_ext }}">
+                        </div>
+                        <div>
+                            <label>Predefined talk</label>
+                            <select name="talk" id="talk" onchange="talk_select(this)">
+                                <option value="-1">Choose a talk...</option>
+                                {% for talk in talks_sorted %}
+                                <option value={{talk}}>{{talks[talk].title}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label>Talk ID</label>
+                            <input id="talkid" name="talkid" type="text"/>
+                        </div>
+                        <div>
+                            <label>Talk Title</label>
+                            <input id="title" name="title" type="text"/>
+                        </div>
+                        <div>
+                            <label>Presenter</label>
+                            <input id="presenter" name="presenter" type="text"/>
+                        </div>
+                        <div class="fisher-price">
+                            <input type="button" onclick="send_to_renderer()" value="Send to Renderer"/>
+                            <!--<input type="submit" value="Send to Renderer"/>-->
+                            <button type="button" onclick="get_shuttle()">Connect to Shuttle controller</button><br/>
+                        </div>
+                        
                     </div>
-                    <div>
-                        <label>Predefined talk</label>
-                        <select name="talk" id="talk" onchange="talk_select(this)">
-                            <option value="-1">Choose a talk...</option>
-                            {% for talk in talks_sorted %}
-                            <option value={{talk}}>{{talks[talk].title}}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div>
-                        <label>Talk ID</label>
-                        <input id="talkid" name="talkid" type="text"/>
-                    </div>
-                    <div>
-                        <label>Talk Title</label>
-                        <input id="title" name="title" type="text"/>
-                    </div>
-                    <div>
-                        <label>Presenter</label>
-                        <input id="presenter" name="presenter" type="text"/>
-                    </div>
-                    <div class="fisher-price">
-                        <input type="button" onclick="send_to_renderer()" value="Send to Renderer"/>
-                        <!--<input type="submit" value="Send to Renderer"/>-->
-                        <button type="button" onclick="get_shuttle()">Connect to Shuttle controller</button><br/>
-                    </div>
-                    
                 </div>
+            </form>
+            <button type="button" onclick="show_help()" class="help">?</button>
+            <div id="instructions" class="help_dropdown">
+                <h1>Instructions</h1>
+                <p><b>Spacebar</b> to play/pause</p>
+                <p><b>left</b> or <b>right</b> to go forwards/back one frame</p>
+                <p><b>i</b> to save an "In" time</p>
+                <p><b>o</b> to save an "Out" time</p>
+                <p><b>00001000</b> or <b>1000</b> to skip to a specific timecode (<i>00:00:10:00</i> in this case)</p>
+                <p><b>+00001000</b> or <b>+1000</b> to skip forwards by a specific timecode (<i>00:00:10:00</i> in this case)</p>
+                <p><b>-00001000</b> or <b>-1000</b> to skip backwards by a specific timecode (<i>00:00:10:00</i> in this case)</p>
+                <img src="{{url_for('static', filename='img/shuttle-controls.png')}}" alt="Contour Shuttle controls"/>
             </div>
-        </form>
-        <button type="button" onclick="show_help()" class="help">?</button>
-        <div id="instructions" class="help_dropdown">
-            <h1>Instructions</h1>
-            <p><b>Spacebar</b> to play/pause</p>
-            <p><b>left</b> or <b>right</b> to go forwards/back one frame</p>
-            <p><b>i</b> to save an "In" time</p>
-            <p><b>o</b> to save an "Out" time</p>
-            <p><b>00001000</b> or <b>1000</b> to skip to a specific timecode (<i>00:00:10:00</i> in this case)</p>
-            <p><b>+00001000</b> or <b>+1000</b> to skip forwards by a specific timecode (<i>00:00:10:00</i> in this case)</p>
-            <p><b>-00001000</b> or <b>-1000</b> to skip backwards by a specific timecode (<i>00:00:10:00</i> in this case)</p>
-            <img src="{{url_for('static', filename='img/shuttle-controls.png')}}" alt="Contour Shuttle controls"/>
+            {% if vid_type == "dash" %}
+            <script src="{{url_for('static', filename='js/dash.all.min.js')}}"></script>
+            <script>
+                (function(){
+                    var url = "/static/video/{{ vid_dir }}/{{ video }}.mpd";
+                    var player = dashjs.MediaPlayer().create();
+                    player.initialize(document.querySelector("#video1"), url, false);
+                })();
+            </script>
+            {% endif %}
+            {% if vid_type == "hls" %}
+            <script src="{{url_for('static', filename='js/hls.min.js')}}"></script>
+            <script>
+                var video = document.getElementById('video1');
+                var hls = new Hls();
+                hls.loadSource("/static/video/{{ vid_dir }}/{{ video }}.m3u8");
+                hls.attachMedia(video);
+            </script>
+            {% endif %}
+            <script id="talkdata" type="application/json">
+                {{ talks_json|safe }}
+            </script>
         </div>
-        {% if vid_type == "dash" %}
-        <script src="{{url_for('static', filename='js/dash.all.min.js')}}"></script>
-        <script>
-            (function(){
-                var url = "/static/video/{{ vid_dir }}/{{ video }}.mpd";
-                var player = dashjs.MediaPlayer().create();
-                player.initialize(document.querySelector("#video1"), url, false);
-            })();
-        </script>
-        {% endif %}
-        {% if vid_type == "hls" %}
-        <script src="{{url_for('static', filename='js/hls.min.js')}}"></script>
-        <script>
-            var video = document.getElementById('video1');
-            var hls = new Hls();
-            hls.loadSource("/static/video/{{ vid_dir }}/{{ video }}.m3u8");
-            hls.attachMedia(video);
-        </script>
-        {% endif %}
-        <script id="talkdata" type="application/json">
-            {{ talks_json|safe }}
-        </script>
     </body>
 </html>
