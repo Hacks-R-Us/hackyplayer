@@ -4,3 +4,5 @@ __pycache__
 temp
 config_local.py
 logs/
+input/
+static/swaggerui

@@ -1,7 +1,7 @@
 @font-face { font-family: open-dyslexic; src: url('fonts/OpenDyslexic3-Regular.ttf'); }
 
 body {
-	font-family: "Comic Sans MS", "open-dyslexic";
+	font-family: "Comic Sans MS";
 }
 
 div.fisher-price>button:nth-of-type(4n+1) {

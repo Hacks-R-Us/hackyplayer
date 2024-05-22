@@ -1,4 +1,4 @@
-var framerate = 25
+var framerate = 50
 
 function bff (frames=1) {
     // Button Frame Forward
@@ -277,7 +277,7 @@ function send_to_renderer(){
             }
         };
 
-        xhttp.open("POST", "/build", true);
+        xhttp.open("POST", "/api/v1/build", true);
         xhttp.send(data);
     }
 }

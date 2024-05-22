@@ -1,0 +1,145 @@
+swagger: "2.0"
+info:
+  title: HackyplayerAPI
+  description: API for Hackyplayer
+  version: 1.0.0
+
+host: 'localhost:5000'
+basePath: /api/v1
+schemes:
+  - http
+paths:
+  /build:
+    post:
+      summary: Kick off an output build
+      responses:
+        200:
+          description: OK
+
+  /ingest:
+    get:
+      summary: Returns a list of running ingest encodes.
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+    
+    delete:
+      summary: Stop all running ingests
+      responses:
+        200:
+          description: OK
+  
+  /ingest/{taskid}:
+    get:
+      summary: Returns details on a single ingest task.
+      parameters:
+        - in: path
+          name: taskid
+          type: string
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+    
+    delete:
+      summary: Stop a single ingest task
+      parameters:
+        - in: path
+          name: taskid
+          type: string
+      responses:
+        200:
+          description: OK
+
+  /tasks:
+    get:
+      summary: Returns a list of running encodes.
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+    
+    delete:
+      summary: Stop all running encodes
+      responses:
+        200:
+          description: OK
+  
+  /tasks/{taskid}:
+    get:
+      summary: Returns details on a single encode task.
+      parameters:
+        - in: path
+          name: taskid
+          type: string
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+    
+    delete:
+      summary: Stop certain running encode
+      parameters:
+        - in: path
+          name: taskid
+          type: string
+      responses:
+        200:
+          description: OK
+
+  /watch:
+    get:
+      summary: Returns a list of Watchfolders.
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+    
+    delete:
+      summary: Stop all Watchfolders
+      responses:
+        200:
+          description: OK
+  
+  /watch/{folder}:
+    get:
+      summary: Returns details on a single watchfolder.
+      parameters:
+        - in: path
+          name: folder
+          type: string
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+    
+    delete:
+      summary: Stop specific watchfolder
+      parameters:
+        - in: path
+          name: folder
+          type: string
+      responses:
+        200:
+          description: OK
+
+    put:
+      summary: Start a watchfolder watching the given folder
+      parameters:
+        - in: path
+          name: folder
+          type: string
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+        400:
+          description: The provided folder is not one Hackyplayer has been configured to watch
