@@ -22,6 +22,7 @@ DEFAULT_CONFIG = {
         "EXT": [".mpd"],
         "NAME": "Live"
         }],
+    "VIDEO_OUTPUT": pathlib.Path("static/video/output"),
     "VIDEO_TEMP": pathlib.Path("temp"),
     "WATCHFOLDERS": [{
         "NAME": "input",
