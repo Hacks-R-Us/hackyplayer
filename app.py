@@ -47,8 +47,6 @@ def index():
         }
         files.append(vid_dir)
 
-    print(files)
-
     running_tasks = app_cel.control.inspect().active()
     if running_tasks:
         for name,host in running_tasks.items():
@@ -92,18 +90,19 @@ def api_build():
             break
     else:
         filename = "{}".format(flask.request.form['talkid'])
-    print(filename)
-
 
     talk_data = {
         "title": flask.request.form['title'],
         "presenter": flask.request.form['presenter'],
         "filename": filename
     }
-    vid_dir = pathlib.Path(flask.request.form['video']).parts[0]
+    vid_dir = str(pathlib.Path(flask.request.form['video']).parts[0])
+    for source in app.config["VIDEO_SOURCES"]:
+        if source["WEBDIR"] == vid_dir:
+            vid_dir_path = source["DISKDIR"]
     vid = pathlib.Path(flask.request.form['video']).parts[1]
     result = tasks.build_video.delay(
-        str(pathlib.Path.joinpath(app.config["VIDEO_{}".format(vid_dir).upper()], vid)), 
+        str(pathlib.Path.joinpath(vid_dir_path, vid)), 
         talk_data, 
         flask.request.form['start_tc'], 
         flask.request.form['end_tc'],

@@ -1,4 +1,5 @@
 {% include 'head.html' %}
+      {% include 'tasks-table-head.html' %}
     </head>
     <body>
       {% include 'sidebar.html' %}
@@ -13,35 +14,7 @@
             {% endfor -%}
           </table>
           {% endfor -%}
-          <h1>Running Tasks</h1>
-          <table>
-            <thead>
-              <tr>
-                <th>Task start time</th>
-                <th>ID</th>
-                <th>Source file</th>
-                <th>Talk Title</th>
-                <th>Talk Presenter</th>
-                <th>Video Start TC</th>
-                <th>Video End TC</th>
-                <th>Worker node</th>
-              </tr>
-            </thead>
-            {% for name,host in running_tasks.items() -%}
-              {% for task in host -%}
-              <tr>
-                <td>{{ task.time_start }}</td>
-                <td>{{ task.id }}</td>
-                <td>{{ task.args[0] }}</td>
-                <td>{{ task.args[1]["title"] }}</td>
-                <td>{{ task.args[1]["presenter"] }}</td>
-                <td>{{ task.args[2] }}</td>
-                <td>{{ task.args[3] }}</td>
-                <td>{{ task.hostname }}</td>
-              </tr>
-              {% endfor -%}
-            {% endfor -%}
-          </table>
+          {% include 'tasks-table-body.html' %}
         </div>
     </body>
 </html>

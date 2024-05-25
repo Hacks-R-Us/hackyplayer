@@ -1,0 +1,22 @@
+<link href="static/css/datatables.min.css" rel="stylesheet">
+<script src="static/js/datatables.min.js"></script>
+<script>
+    $(document).ready( function () {
+        var table = $('#tasktable').DataTable( {
+            ajax: '/api/v1/tasks',
+            columns: [
+                { data: 'time_start' },
+                { data: 'id' },
+                { data: 'source' },
+                { data: 'title' },
+                { data: 'presenter' },
+                { data: 'in_tc' },
+                { data: 'out_tc' },
+                { data: 'node' }
+            ]
+        } );
+        setInterval(function () {
+            table.ajax.reload(null, false);
+        }, 30000);
+    } );
+</script>
