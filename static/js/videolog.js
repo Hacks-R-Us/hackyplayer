@@ -118,7 +118,8 @@ function checkKey(e) {
     const nopropElements = [
         document.getElementById("presenter"),
         document.getElementById("title"),
-        document.getElementById("video1")
+        document.getElementById("video1"),
+        document.getElementById("talkid")
     ]
     if (nopropElements.indexOf(document.activeElement) != -1){
         return
