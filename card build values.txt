@@ -1,0 +1,53 @@
+Sponsor:
+    - background:
+        - file: low contrast
+    
+    - slide:
+        width: 1800
+        height: 960
+        x: 60
+        y: 60
+        
+slide:
+    - background:
+        - file: low contrast
+
+    - logo:
+        x: 0
+        y: 0
+        width: 842
+        height: 376
+
+    - pres:
+        x: 60
+        y: 640
+        width: 1800
+        height: 256
+        text-align: center
+
+    - talk:
+        x: 60
+        y: 320
+        width: 1800
+        height: 300
+        text-align: center      
+
+
+Endboard:
+    - background:
+        - file: low contrast
+
+    - logo:
+        x: 0
+        y: 0
+        width: 842
+        height: 376
+
+    - copyright:
+        x: 870
+        y: 70
+        width: 1000
+        height: 256
+        text-align: right
+
+
