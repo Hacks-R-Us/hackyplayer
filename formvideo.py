@@ -54,10 +54,10 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
     end_fade = 2 # Fade out time on endslate
     afade_in = 3 # Talk audio fade in duration
     afade_out = 3 # Talk audio fade out duration
-    spn_dur = 5 # Sponsor slide hold duration
+    spn_dur = 3 # Sponsor slide hold duration
     spn_fade_in = 0.4 # Sponsor slide fade-in duration
     spn_fade_out = 0.4 # Sponsor slide cross-fade out duration
-    title_dur = 5 # How long to hold the title card
+    title_dur = 2 # How long to hold the title card
     title_fade_out = 0.4 # Title card into program duration
     main_fade_out = 0.4 # Main program into endboard duration
 
