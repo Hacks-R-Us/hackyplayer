@@ -84,9 +84,12 @@ def api_build():
 
     with open("talks.json") as url:
         data = json.load(url)
+
+    description = None
     for talk in data:
         if talk["id"] == int(flask.request.form['talkid']):
             filename = "{}_{}".format(flask.request.form['talkid'], talk["slug"])
+            description = talk["description"]
             break
     else:
         filename = "{}".format(flask.request.form['talkid'])
@@ -94,8 +97,12 @@ def api_build():
     talk_data = {
         "title": flask.request.form['title'],
         "presenter": flask.request.form['presenter'],
-        "filename": filename
+        "filename": filename,
     }
+
+    if description:
+        talk_data["description"] = description
+
     vid_dir = str(pathlib.Path(flask.request.form['video']).parts[0])
     for source in app.config["VIDEO_SOURCES"]:
         if source["WEBDIR"] == vid_dir:

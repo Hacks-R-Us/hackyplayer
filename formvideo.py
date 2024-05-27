@@ -73,9 +73,9 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
     spons_file = "resources/sponsor_slide_rounded.png"
 
     # Generated files paths
-    copr_file = "temp/copyright.png"
-    spres_file = "temp/start_pres.png"
-    stalk_file = "temp/start_title.png"
+    copr_file = "copyright.png"
+    spres_file = "start_pres.png"
+    stalk_file = "start_title.png"
 
     # Convert start and end to some other forms
     start_s = timecode_to_seconds(start_tc)
@@ -98,6 +98,12 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
         filename = talk["filename"] + "-" + start_timestamp
     except KeyError:
         filename = start_timestamp
+
+    Path.joinpath(Path(temp_dir), Path(filename)).mkdir(parents=True, exist_ok=True)
+
+    copr_file = Path.joinpath(Path(temp_dir), Path(filename), copr_file)
+    spres_file = Path.joinpath(Path(temp_dir), Path(filename), spres_file)
+    stalk_file = Path.joinpath(Path(temp_dir), Path(filename), stalk_file)
 
     output_file = Path(filename + ".mp4")
     log_file = Path(filename + ".log")
@@ -158,6 +164,18 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
                 json_string += line
         loud_vals = json.loads(json_string)
 
+        # Build file metadata list
+        metadata = [
+            "-metadata", "title={}".format(talk["title"]),
+            "-metadata", "artist={}".format(talk["presenter"]),
+            "-metadata", "year=2024",
+        ]
+
+        try:
+            metadata.extend(("-metadata", "synopsis={}".format(talk["description"])))
+        except KeyError:
+            pass
+
         # Run the final build FFmpeg
         ffmpeg_args = [
             FFMPEG_BIN,
@@ -193,6 +211,7 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
                                 
             ),
             "-map", "[p1]", "-map", "[a1]", "-map_metadata", "-1",
+            *metadata,
             "-c:v", "h264", "-crf", "16", "-g", str(math.floor(framerate/2)), "-flags", "+cgop",
             "-c:a", "aac", "-ar", "48000", "-b:a", "128k",
             "-r", str(framerate), "-pix_fmt", "yuv420p", "-movflags", "+faststart", output_path, "-y"
