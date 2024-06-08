@@ -10,7 +10,7 @@ import celery_singleton
 import config
 import formvideo
 
-logger = logging.getLogger("__name__")
+logger = logging.getLogger(__name__)
 
 flask_app = config.create_app()
 celery_app = flask_app.extensions["celery"]

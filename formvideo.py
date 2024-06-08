@@ -16,12 +16,15 @@ IMAGEMAGICK_BIN = "convert"
 FRAMERATE = 50
 LOUD_LEVEL = -23
 
+# Paths relative to app root
 TEMP_DIR = Path("temp/")
 OUT_DIR = Path("static/video/output")
 LOG_DIR = Path("logs/")
+RESOURCE_DIR = Path("resources/")
+
+FONT_PATH = Path("resources/Raleway.ttf")
 
 def timecode_split(timecode, framerate = FRAMERATE):
-    
     splits = timecode.split(":")
     hours = int(splits[0])
     minutes = int(splits[1])
@@ -35,6 +38,7 @@ def timecode_split(timecode, framerate = FRAMERATE):
 
     return (hours, minutes, seconds, frames)
 
+
 def timecode_to_seconds(timecode, framerate = FRAMERATE):
     hours,minutes,seconds,frames = timecode_split(timecode, framerate)
 
@@ -47,6 +51,12 @@ def timecode_to_timestamp(timecode, framerate = FRAMERATE):
 
 
 def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = OUT_DIR, temp_dir = TEMP_DIR):
+
+    video = Path(video)
+
+    working_dir = video.parent
+
+    logger.info(working_dir)
 
     # Timing information
     end_dur = 10 # How long to hold the endslate for
@@ -67,10 +77,10 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
     col_bkg = "#00000000" #"#21301850"
 
     # Resource files
-    bkgd_file = "resources/BG_V3.mp4"
-    transp_file = "resources/transparent.png"
-    logo_file = "resources/logo.svg"
-    spons_file = "resources/sponsor_slide_rounded.png"
+    bkgd_file = "/data/hackyplayer/resources/BG_V3_LC_Shaded.mp4"
+    transp_file = "/data/hackyplayer/resources/transparent.png"
+    logo_file = "/data/hackyplayer/resources/logo.svg"
+    spons_file = "/data/hackyplayer/resources/sponsor_slide_rounded.png"
 
     # Generated files paths
     copr_file = "copyright.png"
@@ -85,7 +95,7 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
 
     # Calculate some other reused variables
     fade_offset = end_s - start_s - (end_fade_in/2.)
-    afade_offset = fade_offset - (afade_out/2.) # When to fade out the main talk audio
+    afade_offset = fade_offset - (afade_out) # When to fade out the main talk audio
     eb_end = fade_offset + end_dur # 
     end_tdur = end_dur + end_fade # Total duration of the endslate, including fade time
     title_end = spn_dur + title_dur
@@ -113,7 +123,7 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
     start_title_args = [
         IMAGEMAGICK_BIN, 
         "-size", "1800x300", "-background", "#00000000", 
-        "-fill", col_talk, "-gravity", "center", "caption:{}".format(talk["title"]),
+        "-fill", col_talk, "-gravity", "center", "-font", str(FONT_PATH), "caption:{}".format(talk["title"]),
         "(", "+clone", "-shadow", "500x2+0+0", ")", "+swap", "-background", col_bkg, "-layers", "merge", "+repage",
         stalk_file
     ]
@@ -121,7 +131,7 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
     start_pres_arg = [
         IMAGEMAGICK_BIN,
         "-size", "1800x256", "-background", "#00000000",
-        "-fill", col_pres, "-gravity", "center", "caption:{}".format(talk["presenter"]),
+        "-fill", col_pres, "-gravity", "center", "-font", str(FONT_PATH), "caption:{}".format(talk["presenter"]),
         "(", "+clone", "-shadow", "500x2+0+0", ")", "+swap", "-background", col_bkg, "-layers", "merge", "+repage",
         spres_file
     ]
@@ -129,14 +139,14 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
     copyright_args = [
         IMAGEMAGICK_BIN,
         "-size", "1000x256", "-background", "#00000000",
-        "-fill", "#2eadd9", "-gravity", "east", "caption:{}".format(lic_text),
+        "-fill", "#2eadd9", "-gravity", "east", "-font", str(FONT_PATH), "caption:{}".format(lic_text),
         "(", "+clone", "-shadow", "500x2+0+0", ")", "+swap", "-background", col_bkg, "-layers", "merge", "+repage",
         copr_file
     ]
 
     ffmpeg_loudness_args = [
         FFMPEG_BIN,
-        "-ss", start_ts, "-to", end_ts, "-i", video,
+        "-ss", start_ts, "-to", end_ts, "-i", video.name,
         "-filter_complex", "[0:a]afade=in:d={in_:.2f},afade=out:st={out_st:.2f}:d={out:.2f},loudnorm=print_format=json".format(in_ = afade_in, out = afade_out, out_st = afade_offset),
         "-f", "null", "-"
     ]
@@ -152,7 +162,7 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
         # First FFmpeg pass for getting loudness stats
         logger.info("Detecting loudness information")
         logger.debug(ffmpeg_loudness_args)
-        analysis = subprocess.check_output(ffmpeg_loudness_args, stderr=subprocess.STDOUT).decode("utf-8").split("\n")
+        analysis = subprocess.check_output(ffmpeg_loudness_args, stderr=subprocess.STDOUT, cwd=working_dir).decode("utf-8").split("\n")
 
         json_detect = False
         json_string = ""
@@ -179,7 +189,7 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
         # Run the final build FFmpeg
         ffmpeg_args = [
             FFMPEG_BIN,
-            "-ss", start_ts, "-to", end_ts, "-i", video, #0
+            "-ss", start_ts, "-to", end_ts, "-i", video.name, #0
             "-stream_loop", "-1", "-r", str(framerate), "-i", bkgd_file, #1
             "-loop", "1", "-framerate", str(framerate), "-i", transp_file, #2
             "-loop", "1", "-framerate", str(framerate), "-i", spres_file, #3
@@ -218,7 +228,7 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
         ]
         logger.info("Running main build")
         logger.debug(ffmpeg_args)
-        subprocess.run(ffmpeg_args, stderr=error_log)
+        subprocess.run(ffmpeg_args, stderr=error_log, cwd=working_dir)
 
     return str(output_path)
 
@@ -231,6 +241,7 @@ def ingest_video(input_path, output_dir, framerate = FRAMERATE):
     ffmpeg_args = [
         FFMPEG_BIN,
         "-i", input_path,
+        "-vf", "bwdif",
         "-c:v", "h264", "-crf", "12", "-g", str(math.floor(framerate/2)), "-flags", "+cgop", "-s", "1920x1080",
         #"-c:v", "h264_nvenc", "-b:v", "12M",
         "-c:a", "aac", "-ar", "48000", "-b:a", "128k",
@@ -265,4 +276,4 @@ if __name__ == "__main__":
         "presenter": "Kim M"
     }
 
-    form_video("static/video/stage_a/bbb_50.mp4", talk_data, "00:05:05:00", "00:05:20:00")
+    form_video("static/video/stagea/bbb_sunflower_2160p_60fps_normal.mp4", talk_data, "00:05:05:00", "00:05:20:00", out_dir=Path("/mnt/vid_working/output"))
