@@ -9,20 +9,22 @@ import shutil
 
 logger = logging.getLogger(__name__)
 
-logger.setLevel(logging.DEBUG)
-
 FFMPEG_BIN = "ffmpeg"
 IMAGEMAGICK_BIN = "convert"
 FRAMERATE = 50
 LOUD_LEVEL = -23
 
 # Paths relative to app root
-TEMP_DIR = Path("temp/")
-OUT_DIR = Path("static/video/output")
-LOG_DIR = Path("logs/")
-RESOURCE_DIR = Path("resources/")
+TEMP_DIR = Path("temp/").resolve()
+OUT_DIR = Path("static/video/output").resolve()
+LOG_DIR = Path("logs/").resolve()
+RESOURCE_DIR = Path("resources/").resolve()
 
-FONT_PATH = Path("resources/Raleway.ttf")
+FONT_PATH = Path.joinpath(RESOURCE_DIR, Path("Raleway.ttf"))
+BKGD_FILE = Path.joinpath(RESOURCE_DIR, Path("BG_V3_LC_Shaded.mp4"))
+TRANSP_FILE = Path.joinpath(RESOURCE_DIR, Path("transparent.png"))
+LOGO_FILE = Path.joinpath(RESOURCE_DIR, Path("logo.svg"))
+SPONS_FILE = Path.joinpath(RESOURCE_DIR, Path("sponsor_slide_rounded.png"))
 
 def timecode_split(timecode, framerate = FRAMERATE):
     splits = timecode.split(":")
@@ -52,11 +54,12 @@ def timecode_to_timestamp(timecode, framerate = FRAMERATE):
 
 def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = OUT_DIR, temp_dir = TEMP_DIR):
 
+    temp_dir = Path(temp_dir).resolve()
+    out_dir = Path(out_dir).resolve()
+
     video = Path(video)
 
     working_dir = video.parent
-
-    logger.info(working_dir)
 
     # Timing information
     end_dur = 10 # How long to hold the endslate for
@@ -76,13 +79,7 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
     col_pres = "#2eadd9"
     col_bkg = "#00000000" #"#21301850"
 
-    # Resource files
-    bkgd_file = "/data/hackyplayer/resources/BG_V3_LC_Shaded.mp4"
-    transp_file = "/data/hackyplayer/resources/transparent.png"
-    logo_file = "/data/hackyplayer/resources/logo.svg"
-    spons_file = "/data/hackyplayer/resources/sponsor_slide_rounded.png"
-
-    # Generated files paths
+    # Generated file names
     copr_file = "copyright.png"
     spres_file = "start_pres.png"
     stalk_file = "start_title.png"
@@ -154,13 +151,13 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
     with open(log_path, "a") as error_log:
 
         # Build all the text assets
-        logger.info("Building text assets")
-        subprocess.run(start_title_args)
-        subprocess.run(start_pres_arg)
-        subprocess.run(copyright_args)
+        logger.info("Building text assets.")
+        subprocess.check_output(start_title_args)
+        subprocess.check_output(start_pres_arg)
+        subprocess.check_output(copyright_args)
 
         # First FFmpeg pass for getting loudness stats
-        logger.info("Detecting loudness information")
+        logger.info("Detecting loudness information.")
         logger.debug(ffmpeg_loudness_args)
         analysis = subprocess.check_output(ffmpeg_loudness_args, stderr=subprocess.STDOUT, cwd=working_dir).decode("utf-8").split("\n")
 
@@ -190,12 +187,12 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
         ffmpeg_args = [
             FFMPEG_BIN,
             "-ss", start_ts, "-to", end_ts, "-i", video.name, #0
-            "-stream_loop", "-1", "-r", str(framerate), "-i", bkgd_file, #1
-            "-loop", "1", "-framerate", str(framerate), "-i", transp_file, #2
+            "-stream_loop", "-1", "-r", str(framerate), "-i", BKGD_FILE, #1
+            "-loop", "1", "-framerate", str(framerate), "-i", TRANSP_FILE, #2
             "-loop", "1", "-framerate", str(framerate), "-i", spres_file, #3
             "-loop", "1", "-framerate", str(framerate), "-i", stalk_file, #4
-            "-loop", "1", "-framerate", str(framerate), "-i", logo_file, #5
-            "-loop", "1", "-framerate", str(framerate), "-i", spons_file, #6
+            "-loop", "1", "-framerate", str(framerate), "-i", LOGO_FILE, #5
+            "-loop", "1", "-framerate", str(framerate), "-i", SPONS_FILE, #6
             "-loop", "1", "-framerate", str(framerate), "-i", copr_file, #7
             "-filter_complex", ("[0:a]afade=in:d={in_:.2f},afade=out:st={out_st:.2f}:d={out:.2f},adelay={title_end:.2f}:all=1,".format(in_ = afade_in, out = afade_out, out_st = afade_offset, spn_dur = spn_dur, title_end = title_end * 1000) +
                                 "loudnorm=I={target:.2f}:TP=-1.5:measured_I={mI}:measured_tp={mTP}:measured_LRA={mLRA}:measured_thresh={mTH}:offset={off}:linear=true:print_format=json[a1];".format(
@@ -226,9 +223,10 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
             "-c:a", "aac", "-ar", "48000", "-b:a", "128k",
             "-r", str(framerate), "-pix_fmt", "yuv420p", "-movflags", "+faststart", output_path, "-y"
         ]
-        logger.info("Running main build")
+        logger.info("Running main build.")
         logger.debug(ffmpeg_args)
-        subprocess.run(ffmpeg_args, stderr=error_log, cwd=working_dir)
+        subprocess.check_output(ffmpeg_args, stderr=error_log, cwd=working_dir)
+        logger.info("Completed main build.")
 
     return str(output_path)
 
