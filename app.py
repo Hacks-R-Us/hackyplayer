@@ -129,11 +129,8 @@ def view_tasks():
 
 @app.route(app.config["api_route"]+"/tasks", methods=["GET"])
 def api_tasks():
-#    result = {
-#        "active": app_cel.control.inspect().active(),
-#        "scheduled": app_cel.control.inspect().scheduled()
-#    }
     running_tasks = app_cel.control.inspect().active()
+    scheduled_tasks = app_cel.control.inspect().reserved()
     result = {"data": []}
     if running_tasks:
         for name,host in running_tasks.items():
@@ -141,6 +138,21 @@ def api_tasks():
                 if task["type"] == "tasks.build_video":
                     result["data"].append({
                         "time_start": datetime.datetime.fromtimestamp(task["time_start"]).strftime('%Y-%m-%d %H:%M:%S'),
+                        "id": task["id"],
+                        "source": task["args"][0],
+                        "title": task["args"][1]["title"],
+                        "presenter": task["args"][1]["presenter"],
+                        "in_tc": task["args"][2],
+                        "out_tc": task["args"][3],
+                        "node": task["hostname"]
+                    })
+
+    if scheduled_tasks:
+        for name,host in scheduled_tasks.items():
+            for task in host:
+                if task["type"] == "tasks.build_video":
+                    result["data"].append({
+                        "time_start": None,
                         "id": task["id"],
                         "source": task["args"][0],
                         "title": task["args"][1]["title"],
@@ -208,6 +220,7 @@ def api_watch_start(folder):
                 },
                 "success": True
             }
+            break
     else:
         result = {
             "success": False
