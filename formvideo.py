@@ -7,7 +7,9 @@ import math
 import os.path
 import shutil
 
+# Set default logger (is overwritten within certain functions)
 logger = logging.getLogger(__name__)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 FFMPEG_BIN = "ffmpeg"
 IMAGEMAGICK_BIN = "convert"
@@ -51,8 +53,43 @@ def timecode_to_timestamp(timecode, framerate = FRAMERATE):
 
     return "{:02d}:{:02d}:{:02d}.{:02d}".format(hours, minutes, seconds, int(frames*100/framerate))
 
+class FileLogger():
+    def critical(self, *args, **kwargs):
+        self.main.critical(*args, **kwargs)
+        self.file.critical(*args, **kwargs)
 
-def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = OUT_DIR, temp_dir = TEMP_DIR):
+    def exception(self, *args, **kwargs):
+        self.main.exception(*args, **kwargs)
+        self.file.exception(*args, **kwargs)
+
+    def error(self, *args, **kwargs):
+        self.main.error(*args, **kwargs)
+        self.file.error(*args, **kwargs)
+
+    def warning(self, *args, **kwargs):
+        self.main.warning(*args, **kwargs)
+        self.file.warning(*args, **kwargs)    
+
+    def debug(self, *args, **kwargs):
+        self.main.debug(*args, **kwargs)
+        self.file.debug(*args, **kwargs)        
+
+    def info(self, *args, **kwargs):
+        self.main.info(*args, **kwargs)
+        self.file.info(*args, **kwargs)
+
+    def __init__(self, request_id, task_log):
+        self.main = logging.getLogger(__name__).getChild(str(request_id))
+        self.file = logging.getLogger(str(request_id))
+        self.file.propagate = False
+
+        file_handler = logging.FileHandler(task_log)
+        file_handler.setFormatter(formatter)
+        self.file.setLevel(logging.DEBUG)
+        self.file.addHandler(file_handler)
+
+
+def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = OUT_DIR, temp_dir = TEMP_DIR):
 
     temp_dir = Path(temp_dir).resolve()
     out_dir = Path(out_dir).resolve()
@@ -106,16 +143,25 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
     except KeyError:
         filename = start_timestamp
 
-    Path.joinpath(Path(temp_dir), Path(filename)).mkdir(parents=True, exist_ok=True)
+    job_temp_dir = Path.joinpath(Path(temp_dir), Path(filename))
+    job_temp_dir.mkdir(parents=True, exist_ok=True)
 
     copr_file = Path.joinpath(Path(temp_dir), Path(filename), copr_file)
     spres_file = Path.joinpath(Path(temp_dir), Path(filename), spres_file)
     stalk_file = Path.joinpath(Path(temp_dir), Path(filename), stalk_file)
 
     output_file = Path(filename + ".mp4")
-    log_file = Path(filename + ".log")
     output_path = Path.joinpath(Path(out_dir), output_file)
-    log_path = Path.joinpath(Path(LOG_DIR), log_file)
+
+    # Setup log paths
+    job_log_dir = Path.joinpath(Path(LOG_DIR), Path(str(task.request.id)))
+    job_log_dir.mkdir(parents=True, exist_ok=True)
+    build_log = Path.joinpath(job_log_dir, Path("main_build.log"))
+    loud_log = Path.joinpath(job_log_dir, Path("loudness_analysis.log"))
+    task_log = Path.joinpath(job_log_dir, Path(filename + ".log"))
+
+    # And set up the logger
+    logger = FileLogger(task.request.id, task_log)
 
     start_title_args = [
         IMAGEMAGICK_BIN, 
@@ -148,18 +194,19 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
         "-f", "null", "-"
     ]
 
-    with open(log_path, "a") as error_log:
+    # Build all the text assets
+    logger.info("Building text assets.")
+    subprocess.check_output(start_title_args)
+    subprocess.check_output(start_pres_arg)
+    subprocess.check_output(copyright_args)
 
-        # Build all the text assets
-        logger.info("Building text assets.")
-        subprocess.check_output(start_title_args)
-        subprocess.check_output(start_pres_arg)
-        subprocess.check_output(copyright_args)
-
-        # First FFmpeg pass for getting loudness stats
-        logger.info("Detecting loudness information.")
-        logger.debug(ffmpeg_loudness_args)
-        analysis = subprocess.check_output(ffmpeg_loudness_args, stderr=subprocess.STDOUT, cwd=working_dir).decode("utf-8").split("\n")
+    # First FFmpeg pass for getting loudness stats
+    logger.info("Detecting loudness information.")
+    logger.debug(ffmpeg_loudness_args)
+    with open(loud_log, "a") as error_log:
+        loud_output = subprocess.check_output(ffmpeg_loudness_args, stderr=subprocess.STDOUT, cwd=working_dir).decode("utf-8")
+        error_log.writelines(loud_output)
+        analysis = loud_output.split("\n")
 
         json_detect = False
         json_string = ""
@@ -170,63 +217,66 @@ def form_video(video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = O
             if json_detect:
                 json_string += line
         loud_vals = json.loads(json_string)
+    logger.info("Extracted loudness information.")
+    logger.debug(loud_vals)
 
-        # Build file metadata list
-        metadata = [
-            "-metadata", "title={}".format(talk["title"]),
-            "-metadata", "artist={}".format(talk["presenter"]),
-            "-metadata", "year=2024",
-        ]
+    # Build file metadata list
+    metadata = [
+        "-metadata", "title={}".format(talk["title"]),
+        "-metadata", "artist={}".format(talk["presenter"]),
+        "-metadata", "year=2024",
+    ]
 
-        try:
-            metadata.extend(("-metadata", "synopsis={}".format(talk["description"])))
-        except KeyError:
-            pass
+    try:
+        metadata.extend(("-metadata", "synopsis={}".format(talk["description"])))
+    except KeyError:
+        pass
 
-        # Run the final build FFmpeg
-        ffmpeg_args = [
-            FFMPEG_BIN,
-            "-ss", start_ts, "-to", end_ts, "-i", video.name, #0
-            "-stream_loop", "-1", "-r", str(framerate), "-i", BKGD_FILE, #1
-            "-loop", "1", "-framerate", str(framerate), "-i", TRANSP_FILE, #2
-            "-loop", "1", "-framerate", str(framerate), "-i", spres_file, #3
-            "-loop", "1", "-framerate", str(framerate), "-i", stalk_file, #4
-            "-loop", "1", "-framerate", str(framerate), "-i", LOGO_FILE, #5
-            "-loop", "1", "-framerate", str(framerate), "-i", SPONS_FILE, #6
-            "-loop", "1", "-framerate", str(framerate), "-i", copr_file, #7
-            "-filter_complex", ("[0:a]afade=in:d={in_:.2f},afade=out:st={out_st:.2f}:d={out:.2f},adelay={title_end:.2f}:all=1,".format(in_ = afade_in, out = afade_out, out_st = afade_offset, spn_dur = spn_dur, title_end = title_end * 1000) +
-                                "loudnorm=I={target:.2f}:TP=-1.5:measured_I={mI}:measured_tp={mTP}:measured_LRA={mLRA}:measured_thresh={mTH}:offset={off}:linear=true:print_format=json[a1];".format(
-                                    target = LOUD_LEVEL, 
-                                    mI = loud_vals["input_i"],
-                                    mTP = loud_vals["input_tp"],
-                                    mLRA =  loud_vals["input_lra"],
-                                    mTH = loud_vals["input_thresh"],
-                                    off = loud_vals["target_offset"]) +
-                                "[5:v]split[l1][l2];" +
-                                "[1:v]settb=1/{framerate:.2f},split[bg1][bg2];".format(framerate = framerate) +
-                                "[0:v]settb=1/{framerate:.2f}[m1];".format(framerate = framerate) +
-                                "[2:v][3:v]overlay=x=60:y=640:shortest=1[s2];" +
-                                "[s2][4:v]overlay=x=60:y=320:shortest=1[s3];" +
-                                "[s3][l1]overlay=shortest=1[s4];" +
-                                "[6:v][s4]xfade=offset={spn_dur:.2f}:duration={spn_fade_out:.2f}[s5];".format(spn_dur = spn_dur, spn_fade_out = spn_fade_out) +
-                                "[bg1]trim=start=0:end={title_end:.2f}[bg3];".format(title_end = title_end) +
-                                "[bg3][s5]overlay[s6];" +       
-                                "[bg2][l2]overlay[e1];" +
-                                "[e1][7:v]overlay=x=870:y=70:shortest=1,trim=start=0:end={end_tdur:.2f}[e2];".format(end_tdur = end_tdur) +
-                                "[m1][e2]xfade=offset={eb_start:.2f}:duration=1,fade=out:st={eb_end:.2f}:d={end_fade:.2f}[m2];".format(eb_start = fade_offset, eb_end = eb_end, end_fade = end_fade) +
-                                "[s6][m2]xfade=offset={title_end:.2f}:duration={title_fade_out:.2f},fade=in:d={spn_fade_in:.2f}[p1]".format(title_fade_out = title_fade_out, title_end = title_end, spn_fade_in = spn_fade_in)
-                                
-            ),
-            "-map", "[p1]", "-map", "[a1]", "-map_metadata", "-1",
-            *metadata,
-            "-c:v", "h264", "-crf", "16", "-g", str(math.floor(framerate/2)), "-flags", "+cgop",
-            "-c:a", "aac", "-ar", "48000", "-b:a", "128k",
-            "-r", str(framerate), "-pix_fmt", "yuv420p", "-movflags", "+faststart", output_path, "-y"
-        ]
-        logger.info("Running main build.")
-        logger.debug(ffmpeg_args)
+    # Run the final build FFmpeg
+    ffmpeg_args = [
+        FFMPEG_BIN,
+        "-ss", start_ts, "-to", end_ts, "-i", video.name, #0
+        "-stream_loop", "-1", "-r", str(framerate), "-i", BKGD_FILE, #1
+        "-loop", "1", "-framerate", str(framerate), "-i", TRANSP_FILE, #2
+        "-loop", "1", "-framerate", str(framerate), "-i", spres_file, #3
+        "-loop", "1", "-framerate", str(framerate), "-i", stalk_file, #4
+        "-loop", "1", "-framerate", str(framerate), "-i", LOGO_FILE, #5
+        "-loop", "1", "-framerate", str(framerate), "-i", SPONS_FILE, #6
+        "-loop", "1", "-framerate", str(framerate), "-i", copr_file, #7
+        "-filter_complex", ("[0:a]afade=in:d={in_:.2f},afade=out:st={out_st:.2f}:d={out:.2f},adelay={title_end:.2f}:all=1,".format(in_ = afade_in, out = afade_out, out_st = afade_offset, spn_dur = spn_dur, title_end = title_end * 1000) +
+                            "loudnorm=I={target:.2f}:TP=-1.5:measured_I={mI}:measured_tp={mTP}:measured_LRA={mLRA}:measured_thresh={mTH}:offset={off}:linear=true:print_format=json[a1];".format(
+                                target = LOUD_LEVEL, 
+                                mI = loud_vals["input_i"],
+                                mTP = loud_vals["input_tp"],
+                                mLRA =  loud_vals["input_lra"],
+                                mTH = loud_vals["input_thresh"],
+                                off = loud_vals["target_offset"]) +
+                            "[5:v]split[l1][l2];" +
+                            "[1:v]settb=1/{framerate:.2f},split[bg1][bg2];".format(framerate = framerate) +
+                            "[0:v]settb=1/{framerate:.2f}[m1];".format(framerate = framerate) +
+                            "[2:v][3:v]overlay=x=60:y=640:shortest=1[s2];" +
+                            "[s2][4:v]overlay=x=60:y=320:shortest=1[s3];" +
+                            "[s3][l1]overlay=shortest=1[s4];" +
+                            "[6:v][s4]xfade=offset={spn_dur:.2f}:duration={spn_fade_out:.2f}[s5];".format(spn_dur = spn_dur, spn_fade_out = spn_fade_out) +
+                            "[bg1]trim=start=0:end={title_end:.2f}[bg3];".format(title_end = title_end) +
+                            "[bg3][s5]overlay[s6];" +       
+                            "[bg2][l2]overlay[e1];" +
+                            "[e1][7:v]overlay=x=870:y=70:shortest=1,trim=start=0:end={end_tdur:.2f}[e2];".format(end_tdur = end_tdur) +
+                            "[m1][e2]xfade=offset={eb_start:.2f}:duration=1,fade=out:st={eb_end:.2f}:d={end_fade:.2f}[m2];".format(eb_start = fade_offset, eb_end = eb_end, end_fade = end_fade) +
+                            "[s6][m2]xfade=offset={title_end:.2f}:duration={title_fade_out:.2f},fade=in:d={spn_fade_in:.2f}[p1]".format(title_fade_out = title_fade_out, title_end = title_end, spn_fade_in = spn_fade_in)
+                            
+        ),
+        "-map", "[p1]", "-map", "[a1]", "-map_metadata", "-1",
+        *metadata,
+        "-c:v", "h264", "-crf", "16", "-g", str(math.floor(framerate/2)), "-flags", "+cgop",
+        "-c:a", "aac", "-ar", "48000", "-b:a", "128k",
+        "-r", str(framerate), "-pix_fmt", "yuv420p", "-movflags", "+faststart", output_path, "-y"
+    ]
+    logger.info("Running main build.")
+    logger.debug(ffmpeg_args)
+    with open(build_log, "a") as error_log:
         subprocess.check_output(ffmpeg_args, stderr=error_log, cwd=working_dir)
-        logger.info("Completed main build.")
+    logger.info("Completed main build.")
 
     return str(output_path)
 
@@ -261,7 +311,15 @@ def ingest_video(input_path, output_dir, framerate = FRAMERATE):
     return str(output_path)
 
 if __name__ == "__main__":
-    logging.basicConfig()
+
+    logging.basicConfig(level=logging.INFO)
+
+    class Object(object):
+        pass
+
+    task = Object()
+    task.request = Object()
+    task.request.id = 1
     talk_data = {
         "title": "'This is Britain' – British cultural propaganda films of the 1930s-1940s, their creation, and their far-reaching global legacy",
         "presenter": "Sarah Cole"
@@ -274,4 +332,4 @@ if __name__ == "__main__":
         "presenter": "Kim M"
     }
 
-    form_video("static/video/stagea/bbb_sunflower_2160p_60fps_normal.mp4", talk_data, "00:05:05:00", "00:05:20:00", out_dir=Path("/mnt/vid_working/output"))
+    form_video(task, "static/video/source/bbb_50.mp4", talk_data, "00:05:05:00", "00:05:20:00")

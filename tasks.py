@@ -18,9 +18,9 @@ celery_app = flask_app.extensions["celery"]
 class ErrSigTerm(Exception):
     pass
 
-@celery.shared_task(ignore_result=False)
-def build_video(*args, **kwargs):
-    result = formvideo.form_video(*args, **kwargs)
+@celery.shared_task(ignore_result=False, bind=True)
+def build_video(self, *args, **kwargs):
+    result = formvideo.form_video(self, *args, **kwargs)
     return result
 
 @celery.shared_task(ignore_result=False)
