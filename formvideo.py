@@ -196,6 +196,7 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
 
     # Build all the text assets
     logger.info("Building text assets.")
+    task.update_state(state="Building text assets")
     subprocess.check_output(start_title_args)
     subprocess.check_output(start_pres_arg)
     subprocess.check_output(copyright_args)
@@ -203,6 +204,7 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
     # First FFmpeg pass for getting loudness stats
     logger.info("Detecting loudness information.")
     logger.debug(ffmpeg_loudness_args)
+    task.update_state(state="Analysing Loudness")
     with open(loud_log, "a") as error_log:
         loud_output = subprocess.check_output(ffmpeg_loudness_args, stderr=subprocess.STDOUT, cwd=working_dir).decode("utf-8")
         error_log.writelines(loud_output)
@@ -274,6 +276,7 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
     ]
     logger.info("Running main build.")
     logger.debug(ffmpeg_args)
+    task.update_state(state="Running main build")
     with open(build_log, "a") as error_log:
         subprocess.check_output(ffmpeg_args, stderr=error_log, cwd=working_dir)
     logger.info("Completed main build.")

@@ -136,6 +136,8 @@ def api_tasks():
         for name,host in running_tasks.items():
             for task in host:
                 if task["type"] == "tasks.build_video":
+                    state = app_cel.AsyncResult(task["id"])
+                    state.ready()
                     result["data"].append({
                         "time_start": datetime.datetime.fromtimestamp(task["time_start"]).strftime('%Y-%m-%d %H:%M:%S'),
                         "id": task["id"],
@@ -144,13 +146,16 @@ def api_tasks():
                         "presenter": task["args"][1]["presenter"],
                         "in_tc": task["args"][2],
                         "out_tc": task["args"][3],
-                        "node": task["hostname"]
+                        "node": task["hostname"],
+                        "state": state.state
                     })
 
     if scheduled_tasks:
         for name,host in scheduled_tasks.items():
             for task in host:
                 if task["type"] == "tasks.build_video":
+                    state = app_cel.AsyncResult(task["id"])
+                    state.ready()
                     result["data"].append({
                         "time_start": None,
                         "id": task["id"],
@@ -159,7 +164,8 @@ def api_tasks():
                         "presenter": task["args"][1]["presenter"],
                         "in_tc": task["args"][2],
                         "out_tc": task["args"][3],
-                        "node": task["hostname"]
+                        "node": task["hostname"],
+                        "state": state.state
                     })
     return flask.jsonify(result)
 
