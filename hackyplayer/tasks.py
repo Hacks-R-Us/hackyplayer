@@ -24,8 +24,8 @@ def build_video(self, *args, **kwargs):
     return result
 
 @celery.shared_task(ignore_result=False)
-def ingest_video(input_file, output_dir):
-    result = formvideo.ingest_video(input_file, output_dir)
+def ingest_video(input_file, output_dir, log_dir):
+    result = formvideo.ingest_video(input_file, output_dir, log_dir=log_dir)
     return result
 
 @celery.shared_task(base=celery_singleton.Singleton, ignore_result=False)
@@ -77,7 +77,7 @@ def watch_folder(watch, output_dir="static/video/source"):
                     new_file["pass"] = old_file["pass"] + 1
                 if new_file["pass"] >= 3:
                     logger.info("'%s': 3 passes with no changes, starting processing", video)
-                    result = ingest_video.delay(str(pathlib.Path.joinpath(watch, pathlib.Path(video))), str(output_dir))
+                    result = ingest_video.delay(str(pathlib.Path.joinpath(watch, pathlib.Path(video))), str(output_dir), log_dir=str(flask_app.config["LOG_DIR"]))
                     new_file["processing"] = result.id
             time.sleep(5)
             i += 1

@@ -89,7 +89,7 @@ class FileLogger():
         self.file.addHandler(file_handler)
 
 
-def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = OUT_DIR, temp_dir = TEMP_DIR):
+def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_dir = OUT_DIR, temp_dir = TEMP_DIR, log_dir = LOG_DIR):
 
     temp_dir = Path(temp_dir).resolve()
     out_dir = Path(out_dir).resolve()
@@ -154,7 +154,7 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
     output_path = Path.joinpath(Path(out_dir), output_file)
 
     # Setup log paths
-    job_log_dir = Path.joinpath(Path(LOG_DIR), Path(str(task.request.id)))
+    job_log_dir = Path.joinpath(Path(log_dir), Path(str(task.request.id)))
     job_log_dir.mkdir(parents=True, exist_ok=True)
     build_log = Path.joinpath(job_log_dir, Path("main_build.log"))
     loud_log = Path.joinpath(job_log_dir, Path("loudness_analysis.log"))
@@ -283,7 +283,7 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
 
     return str(output_path)
 
-def ingest_video(input_path, output_dir, framerate = FRAMERATE):
+def ingest_video(input_path, output_dir, framerate = FRAMERATE, log_dir = LOG_DIR):
     
     start_timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     input_file = os.path.basename(input_path)
@@ -302,7 +302,7 @@ def ingest_video(input_path, output_dir, framerate = FRAMERATE):
     logger.debug(ffmpeg_args)
 
     log_file = Path(input_file + start_timestamp + ".log")
-    log_path = Path.joinpath(Path(LOG_DIR), log_file)
+    log_path = Path.joinpath(Path(log_dir), log_file)
 
     with open(log_path, "w+") as error_log:
         subprocess.run(ffmpeg_args, stderr=error_log)

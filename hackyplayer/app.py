@@ -108,7 +108,8 @@ def api_build():
         flask.request.form['start_tc'], 
         flask.request.form['end_tc'],
         out_dir = str(app.config["VIDEO_OUTPUT"]),
-        temp_dir = str(app.config["VIDEO_TEMP"])
+        temp_dir = str(app.config["VIDEO_TEMP"]),
+        log_dir = str(app.config["LOG_DIR"]),
     )
 
     return {"result_id": result.id}
