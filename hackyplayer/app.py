@@ -15,16 +15,6 @@ from . import tasks
 app = tasks.flask_app
 app_cel = tasks.celery_app
 
-# Load default settings
-app.config.update(config.DEFAULT_CONFIG)
-
-# Load local settings
-try:
-    import config_local
-    app.config.update(config_local.CONFIG)
-except (ImportError, AttributeError):
-    pass
-
 app.config["api_route"] = "/api/v1"
 
 def get_files(target, ext_filter = []):

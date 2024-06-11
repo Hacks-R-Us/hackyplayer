@@ -28,7 +28,12 @@ DEFAULT_CONFIG = {
         "NAME": "input",
         "FULLPATH": pathlib.Path("static/video/input"),
         "OUTPUT_DIR": pathlib.Path("static/video/source")
-    }]
+    }],
+    "CELERY": {
+        "broker_url": "redis://localhost",
+        "result_backend": "redis://localhost",
+        "task_ignore_result": False,
+    },
 }
 
 def celery_init_app(app):
@@ -45,13 +50,17 @@ def celery_init_app(app):
 
 def create_app():
     app = flask.Flask(__name__)
-    app.config.from_mapping(
-        CELERY=dict(
-            broker_url="redis://localhost",
-            result_backend="redis://localhost",
-            task_ignore_result=False,
-        ),
-    )
+
+    # Load default settings
+    app.config.update(DEFAULT_CONFIG)
+
+    # Load local settings
+    try:
+        import config_local
+        app.config.update(config_local.CONFIG)
+    except (ImportError, AttributeError):
+        pass
+
     app.config.from_prefixed_env()
     celery_init_app(app)
     return app
