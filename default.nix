@@ -1,6 +1,7 @@
 { sources ? import ./nix/sources.nix
 , pkgs ? import sources.nixpkgs { }
 , poetry2nix ? import sources.poetry2nix { inherit pkgs; }
+, lib ? pkgs.lib
 }:
 
 let
@@ -17,4 +18,14 @@ let
     });
   };
 in
-  hackyplayer.dependencyEnv
+  hackyplayer.dependencyEnv.override {
+    app = hackyplayer.overridePythonAttrs (old: {
+      postPatch = ''
+        ${old.postPatch or ""}
+
+        substituteInPlace hackyplayer/formvideo.py \
+          --replace-fail 'FFMPEG_BIN = "ffmpeg"' 'FFMPEG_BIN = "${lib.getExe' pkgs.ffmpeg "ffmpeg"}"' \
+          --replace-fail 'IMAGEMAGICK_BIN = "convert"' 'IMAGEMAGICK_BIN = "${lib.getExe' pkgs.imagemagick "convert"}"'
+      '';
+    });
+  }
