@@ -28,13 +28,16 @@ except (ImportError, AttributeError):
 app.config["api_route"] = "/api/v1"
 
 def get_files(target, ext_filter = []):
-    for file in sorted(os.listdir(target)):
-        path = os.path.join(target, file)
-        if os.path.isfile(path):
-            if os.path.splitext(file)[1] in ext_filter or ext_filter == []:
-                yield (
-                    os.path.splitext(file)[0]
-                )
+    try:
+        for file in sorted(os.listdir(target)):
+            path = os.path.join(target, file)
+            if os.path.isfile(path):
+                if os.path.splitext(file)[1] in ext_filter or ext_filter == []:
+                    yield (
+                        os.path.splitext(file)[0]
+                    )
+    except FileNotFoundError:
+        return None
 
 @app.route("/")
 def index():

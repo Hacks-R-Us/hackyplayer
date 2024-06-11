@@ -49,7 +49,11 @@ def watch_folder(watch, output_dir="static/video/source"):
             logger.debug("Scanning '%s' for new files", watch)
             old_files = files
             files = {}
-            file_list = [f for f in os.listdir(watch) if os.path.isfile(pathlib.Path.joinpath(watch, f))]
+            try:
+                file_list = [f for f in os.listdir(watch) if os.path.isfile(pathlib.Path.joinpath(watch, f))]
+            except FileNotFoundError:
+                logger.error("Folder on disk doesn't exist or is inaccessible: %s", watch)
+                break
             for video in file_list:
                 files[video] = {}
                 new_file = files[video]
