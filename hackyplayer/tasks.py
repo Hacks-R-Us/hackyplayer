@@ -7,8 +7,8 @@ import time
 import celery
 import celery_singleton
 
-import config
-import formvideo
+from . import config
+from . import formvideo
 
 logger = logging.getLogger(__name__)
 

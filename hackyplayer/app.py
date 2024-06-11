@@ -9,8 +9,8 @@ import urllib
 import flask
 
 # Local
-import config
-import tasks
+from . import config
+from . import tasks
 
 app = tasks.flask_app
 app_cel = tasks.celery_app
@@ -38,6 +38,7 @@ def get_files(target, ext_filter = []):
                     )
     except FileNotFoundError:
         return None
+
 
 @app.route("/")
 def index():
@@ -150,7 +151,7 @@ def api_tasks():
                         "in_tc": task["args"][2],
                         "out_tc": task["args"][3],
                         "node": task["hostname"],
-                        "state": state.state
+                        "state": state.state,
                     })
 
     if scheduled_tasks:
@@ -168,7 +169,7 @@ def api_tasks():
                         "in_tc": task["args"][2],
                         "out_tc": task["args"][3],
                         "node": task["hostname"],
-                        "state": state.state
+                        "state": state.state,
                     })
     return flask.jsonify(result)
 

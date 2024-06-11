@@ -1,0 +1,28 @@
+[project]
+name = "hackyplayer"
+authors = [{name = "Hackyplayer Authors", email = "honk@hacksrus.org"}]
+readme = "README.md"
+dynamic = ["version", "description"]
+
+[project.urls]
+Home = "https://hacksrus.org"
+
+[tool.poetry]
+name = "hackyplayer"
+version = "0.0.1"
+description = ""
+authors = ["Hackyplayer Authors <honk@hacksrus.org>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+flask = "^3.0.3"
+celery = "^5.4.0"
+celery-singleton = "^0.3.1"
+
+[tool.poetry.group.prod.dependencies]
+gunicorn = "^22.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

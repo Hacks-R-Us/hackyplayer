@@ -1,0 +1,26 @@
+{
+    "nixpkgs": {
+        "branch": "nixos-unstable",
+        "description": "Nix Packages collection",
+        "homepage": null,
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "c7b821ba2e1e635ba5a76d299af62821cbcb09f3",
+        "sha256": "0gzqmnniwqjs7hqi6y9zxf2by1j2nxa82zsixzskbr1yrw5vfcqr",
+        "type": "tarball",
+        "url": "https://github.com/NixOS/nixpkgs/archive/c7b821ba2e1e635ba5a76d299af62821cbcb09f3.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "poetry2nix": {
+        "branch": "master",
+        "description": "Convert poetry projects to nix automagically [maintainer=@adisbladis] ",
+        "homepage": "",
+        "owner": "nix-community",
+        "repo": "poetry2nix",
+        "rev": "304f8235fb0729fd48567af34fcd1b58d18f9b95",
+        "sha256": "1089qk0qzjjdm3xp2c9g6nl74zmdzphc9wb9c4rcph9gad5nqrgb",
+        "type": "tarball",
+        "url": "https://github.com/nix-community/poetry2nix/archive/304f8235fb0729fd48567af34fcd1b58d18f9b95.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    }
+}
