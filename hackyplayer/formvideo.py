@@ -242,7 +242,7 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
         "-loop", "1", "-framerate", str(framerate), "-i", TRANSP_FILE, #2
         "-loop", "1", "-framerate", str(framerate), "-i", spres_file, #3
         "-loop", "1", "-framerate", str(framerate), "-i", stalk_file, #4
-        "-loop", "1", "-framerate", str(framerate), "-i", LOGO_FILE, #5
+        "-width", "850", "-height", "380", "-keep_ar", "1", "-loop", "1", "-framerate", str(framerate), "-i", LOGO_FILE, #5
         "-loop", "1", "-framerate", str(framerate), "-i", SPONS_FILE, #6
         "-loop", "1", "-framerate", str(framerate), "-i", copr_file, #7
         "-filter_complex", ("[0:a]afade=in:d={in_:.2f},afade=out:st={out_st:.2f}:d={out:.2f},adelay={title_end:.2f}:all=1,".format(in_ = afade_in, out = afade_out, out_st = afade_offset, spn_dur = spn_dur, title_end = title_end * 1000) +
@@ -253,29 +253,36 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
                                 mLRA =  loud_vals["input_lra"],
                                 mTH = loud_vals["input_thresh"],
                                 off = loud_vals["target_offset"]) +
-                            "[5:v]split[l1][l2];" +
-                            "[1:v]settb=1/{framerate:.2f},split[bg1][bg2];".format(framerate = framerate) +
-                            "[0:v]settb=1/{framerate:.2f}[m1];".format(framerate = framerate) +
-                            "[2:v][3:v]overlay=x=60:y=640:shortest=1[s2];" +
-                            "[s2][4:v]overlay=x=60:y=320:shortest=1[s3];" +
+                            f"[0:v]settb=AVTB,fps={framerate:.2f},format=yuv420p[main];" +
+                            f"[1:v]settb=AVTB,fps={framerate:.2f},format=yuv420p[bg];" +
+                            f"[2:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[tp];" +
+                            f"[3:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[slide-pres];" +
+                            f"[4:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[slide-title];" +
+                            f"[5:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[logo];" +
+                            f"[6:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[slide-spons];" +
+                            f"[7:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[slide-copyright];" +
+                            "[logo]split[l1][l2];" +
+                            "[bg]split[bg1][bg2];" +
+                            "[tp][slide-pres]overlay=x=60:y=640:shortest=1[s2];" +
+                            "[s2][slide-title]overlay=x=60:y=320:shortest=1[s3];" +
                             "[s3][l1]overlay=shortest=1[s4];" +
-                            "[6:v][s4]xfade=offset={spn_dur:.2f}:duration={spn_fade_out:.2f}[s5];".format(spn_dur = spn_dur, spn_fade_out = spn_fade_out) +
-                            "[bg1]trim=start=0:end={title_end:.2f}[bg3];".format(title_end = title_end) +
+                            f"[slide-spons][s4]xfade=offset={spn_dur:.2f}:duration={spn_fade_out:.2f}[s5];" +
+                            f"[bg1]trim=start=0:end={title_end:.2f}[bg3];" +
                             "[bg3][s5]overlay[s6];" +       
                             "[bg2][l2]overlay[e1];" +
-                            "[e1][7:v]overlay=x=870:y=70:shortest=1,trim=start=0:end={end_tdur:.2f}[e2];".format(end_tdur = end_tdur) +
-                            "[m1][e2]xfade=offset={eb_start:.2f}:duration=1,fade=out:st={eb_end:.2f}:d={end_fade:.2f}[m2];".format(eb_start = fade_offset, eb_end = eb_end, end_fade = end_fade) +
+                            f"[e1][slide-copyright]overlay=x=870:y=70:shortest=1,trim=start=0:end={end_tdur:.2f}[e2];" +
+                            "[main][e2]xfade=offset={eb_start:.2f}:duration=1,fade=out:st={eb_end:.2f}:d={end_fade:.2f}[m2];".format(eb_start = fade_offset, eb_end = eb_end, end_fade = end_fade) +
                             "[s6][m2]xfade=offset={title_end:.2f}:duration={title_fade_out:.2f},fade=in:d={spn_fade_in:.2f}[p1]".format(title_fade_out = title_fade_out, title_end = title_end, spn_fade_in = spn_fade_in)
                             
         ),
-        "-map", "[p1]", "-map", "[a1]", "-map_metadata", "-1",
+        "-map", "[p1]:v", "-map", "[a1]:a", "-map_metadata", "-1",
         *metadata,
         "-c:v", "h264", "-crf", "16", "-g", str(math.floor(framerate/2)), "-flags", "+cgop",
-        "-c:a", "aac", "-ar", "48000", "-b:a", "128k",
+        "-c:a", "aac", "-ac", "2", "-ar", "48000", "-b:a", "128k",
         "-r", str(framerate), "-pix_fmt", "yuv420p", "-movflags", "+faststart", output_path, "-y"
     ]
     logger.info("Running main build.")
-    logger.debug(ffmpeg_args)
+    logger.debug("'" + ("' '".join(str(f).replace("'", "'\"'\"'") for f in ffmpeg_args)) + "'")
     task.update_state(state="Running main build")
     with open(build_log, "a") as error_log:
         subprocess.check_output(ffmpeg_args, stderr=error_log, cwd=working_dir)
