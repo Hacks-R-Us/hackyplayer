@@ -63,7 +63,7 @@ def log(vid_dir, video):
 
     #with urllib.request.urlopen("https://www.emfcamp.org/schedule/2024.json") as url:
     #with urllib.request.urlopen("https://www.emfcamp.org/schedule/2022.json") as url:
-    with open("talks.json") as url:
+    with open(pathlib.Path(__file__).parent / "talks.json") as url:
         data = json.load(url)
         talks = {}
         for talk in data:
@@ -76,7 +76,7 @@ def log(vid_dir, video):
 @app.route(app.config["api_route"]+"/build", methods=['POST'])
 def api_build():
 
-    with open("talks.json") as url:
+    with open(pathlib.Path(__file__).parent / "talks.json") as url:
         data = json.load(url)
 
     description = None
@@ -100,10 +100,10 @@ def api_build():
     vid_dir = str(pathlib.Path(flask.request.form['video']).parts[0])
     for source in app.config["VIDEO_SOURCES"]:
         if source["WEBDIR"] == vid_dir:
-            vid_dir_path = source["DISKDIR"]
+            vid_dir_path = pathlib.Path(source["DISKDIR"])
     vid = pathlib.Path(flask.request.form['video']).parts[1]
     result = tasks.build_video.delay(
-        str(pathlib.Path.joinpath(vid_dir_path, vid)), 
+        str(vid_dir_path / vid), 
         talk_data, 
         flask.request.form['start_tc'], 
         flask.request.form['end_tc'],
