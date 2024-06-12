@@ -34,6 +34,7 @@ DEFAULT_CONFIG = {
         "result_backend": "redis://localhost",
         "task_ignore_result": False,
     },
+    "LOG_DIR": pathlib.Path("logs")
 }
 
 def celery_init_app(app):

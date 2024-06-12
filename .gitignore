@@ -1,9 +1,9 @@
 .venv
-static/video
+hackyplayer/static/video
 __pycache__
 temp
 config_local.py
 logs/
 input/
-static/swaggerui
+hackyplayer/static/swaggerui
 result*
