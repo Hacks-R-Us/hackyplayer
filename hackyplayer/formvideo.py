@@ -16,17 +16,17 @@ IMAGEMAGICK_BIN = "convert"
 FRAMERATE = 50
 LOUD_LEVEL = -23
 
-# Paths relative to app root
-TEMP_DIR = Path("temp/").resolve()
-OUT_DIR = Path("static/video/output").resolve()
-LOG_DIR = Path("logs/").resolve()
-RESOURCE_DIR = Path("resources/").resolve()
+APP_ROOT = Path(".").resolve()
+TEMP_DIR = APP_ROOT / "temp"
+OUT_DIR = APP_ROOT / "static" / "video" / "output"
+LOG_DIR = APP_ROOT / "logs"
+RESOURCE_DIR = APP_ROOT / "resources"
 
-FONT_PATH = Path.joinpath(RESOURCE_DIR, Path("Raleway.ttf"))
-BKGD_FILE = Path.joinpath(RESOURCE_DIR, Path("BG_V3_LC_Shaded.mp4"))
-TRANSP_FILE = Path.joinpath(RESOURCE_DIR, Path("transparent.png"))
-LOGO_FILE = Path.joinpath(RESOURCE_DIR, Path("logo.svg"))
-SPONS_FILE = Path.joinpath(RESOURCE_DIR, Path("sponsor_slide_rounded.png"))
+FONT_PATH = RESOURCE_DIR / "Raleway.ttf"
+BKGD_FILE = RESOURCE_DIR / "BG_V3_LC_Shaded.mp4"
+TRANSP_FILE = RESOURCE_DIR / "transparent.png"
+LOGO_FILE = RESOURCE_DIR / "logo.svg"
+SPONS_FILE = RESOURCE_DIR / "sponsor_slide_rounded.png"
 
 def timecode_split(timecode, framerate = FRAMERATE):
     splits = timecode.split(":")
