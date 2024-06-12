@@ -130,7 +130,7 @@ def api_tasks():
     if running_tasks:
         for name,host in running_tasks.items():
             for task in host:
-                if task["type"] == "tasks.build_video":
+                if task["type"] == tasks.build_video.name:
                     state = app_cel.AsyncResult(task["id"])
                     state.ready()
                     result["data"].append({
@@ -148,7 +148,7 @@ def api_tasks():
     if scheduled_tasks:
         for name,host in scheduled_tasks.items():
             for task in host:
-                if task["type"] == "tasks.build_video":
+                if task["type"] == tasks.build_video.name:
                     state = app_cel.AsyncResult(task["id"])
                     state.ready()
                     result["data"].append({
@@ -183,7 +183,7 @@ def api_watch():
     if running_tasks:
         for name,host in running_tasks.items():
             for task in host:
-                if task["type"] == "tasks.watch_folder":
+                if task["type"] == tasks.watch_folder.name:
                     for folder in result["data"]:
                         if folder["folder"] == task["args"][0]:
                             folder["time_start"] = datetime.datetime.fromtimestamp(task["time_start"]).strftime('%Y-%m-%d %H:%M:%S'),
@@ -206,7 +206,7 @@ def api_watch_stop(folder=None):
 
     for node,tasks in app_cel.control.inspect().active().items():
         for task in tasks:
-            if (task["args"][0] == str(fullpath) or folder == None) and task["type"] == "tasks.watch_folder":
+            if (task["args"][0] == str(fullpath) or folder == None) and task["type"] == tasks.watch_folder.name:
                 app_cel.control.revoke(task["id"], terminate=True)
     return flask.jsonify({'success':True})
 
@@ -236,7 +236,7 @@ def api_ingest():
     if running_tasks:
         for name,host in running_tasks.items():
             for task in host:
-                if task["type"] == "tasks.ingest_video":
+                if task["type"] == tasks.ingest_video.name:
                     result["data"].append({
                         "time_start": datetime.datetime.fromtimestamp(task["time_start"]).strftime('%Y-%m-%d %H:%M:%S'),
                         "id": task["id"],
@@ -250,7 +250,7 @@ def api_ingest_stop(taskid=None):
 
     for node,tasks in app_cel.control.inspect().active().items():
         for task in tasks:
-            if task["id"] == taskid and task["type"] == "tasks.ingest_video":
+            if task["id"] == taskid and task["type"] == tasks.ingest_video.name:
                 app_cel.control.revoke(task["id"], terminate=True)
     return flask.jsonify({'success':True})
 
