@@ -2,7 +2,13 @@
 - Install redis (or other Celery-compatible broker)
 - Install ffmpeg and imagemagick
 - Clone repo
-- Run `poetry install`
+- Pick an adventure
+  - Lix (or Nix)
+    - `nix-shell -A shell`
+  - Manual
+    - Install ffmpeg and imagemagick
+    - Install https://github.com/trummerschlunk/master_me as a LADSPA plugin (or make sure it's on your `LADSPA_PATH`)
+    - Run `poetry install`
 - Make the following directories:
   - <install_dir>/static/video/input
   - <install_dir>/static/video/output
@@ -23,9 +29,11 @@ Rember to configure whatever websever you're using to serve source and output fo
 
 # Running
 ## Development
-In seperate consoles/screens/tmux windows, run each of the following:
+In seperate consoles/screens/tmux windows, run each of the following - if you
+installed manually, prefix with `poetry run`; if you used Lix/Nix, run inside
+the `nix-shell -A shell`:
 
-    poetry run flask --app hackyplayer.app run --debug
+    flask --app hackyplayer.app run --debug
     celery -A hackyplayer.tasks worker --loglevel INFO
 
 And you should have a server running at localhost:5000

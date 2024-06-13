@@ -44,4 +44,15 @@ in
     });
   }) // {
     inherit fontconfigConf ffmpegWrapper ffmpeg;
+
+    shell = pkgs.mkShell {
+      packages = [ ffmpeg pkgs.imagemagick ];
+
+      inputsFrom = [ hackyplayer ];
+
+      shellHook = ''
+        export FONTCONFIG_FILE="${fontconfigConf}"
+        export LADSPA_PATH="${lib.getLib pkgs.master_me}/lib/ladspa"
+      '';
+    };
   }
