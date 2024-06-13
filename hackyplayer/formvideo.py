@@ -18,6 +18,7 @@ FFPROBE_BIN = "ffprobe"
 IMAGEMAGICK_BIN = "convert"
 FRAMERATE = 50
 LOUD_LEVEL = -23
+AAC_ENCODER = "aac"  # or e.g. libfdk_aac
 
 APP_ROOT = Path(".").resolve()
 TEMP_DIR = APP_ROOT / "temp"
@@ -249,7 +250,7 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
         "-map", "[p1]:v", "-map", "[a1]:a", "-map_metadata", "-1",
         *metadata,
         "-c:v", "h264", "-crf", "16", "-g", str(math.floor(framerate/2)), "-flags", "+cgop",
-        "-c:a", "aac", "-ac", "2", "-ar", "48000", "-b:a", "128k",
+        "-c:a", AAC_ENCODER, "-ac", "2", "-ar", "48000", "-b:a", "128k",
         "-r", str(framerate), "-pix_fmt", "yuv420p", "-movflags", "+faststart", output_path, "-y"
     ]
     logger.info("Running main build.")
@@ -315,7 +316,7 @@ def ingest_video(task, input_path, output_dir, framerate = FRAMERATE, log_dir = 
         "-map", "0:v", "-map", "[a]",
         "-c:v", "h264", "-crf", "12", "-g", str(math.floor(framerate/2)), "-flags", "+cgop", "-s", "1920x1080",
         #"-c:v", "h264_nvenc", "-b:v", "12M",
-        "-c:a", "aac", "-ac", "2", "-ar", "48000", "-b:a", "128k",
+        "-c:a", AAC_ENCODER, "-ac", "2", "-ar", "48000", "-b:a", "128k",
         "-r", str(framerate), "-pix_fmt", "yuv420p", "-movflags", "+faststart", output_path, "-y"
     ]
 
