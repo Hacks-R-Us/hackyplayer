@@ -23,9 +23,9 @@ def build_video(self, *args, **kwargs):
     result = formvideo.form_video(self, *args, **kwargs)
     return result
 
-@celery.shared_task(ignore_result=False)
-def ingest_video(input_file, output_dir, log_dir):
-    result = formvideo.ingest_video(input_file, output_dir, log_dir=log_dir)
+@celery.shared_task(ignore_result=False, bind=True)
+def ingest_video(self, input_file, output_dir, log_dir):
+    result = formvideo.ingest_video(self, input_file, output_dir, log_dir=log_dir)
     return result
 
 @celery.shared_task(base=celery_singleton.Singleton, ignore_result=False)

@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 FFMPEG_BIN = "ffmpeg"
+FFPROBE_BIN = "ffprobe"
 IMAGEMAGICK_BIN = "convert"
 FRAMERATE = 50
 LOUD_LEVEL = -23
@@ -255,39 +256,56 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
     logger.debug("'" + ("' '".join(str(f).replace("'", "'\"'\"'") for f in ffmpeg_args)) + "'")
     task.update_state(state="Running main build", meta={"current": 0, "total": final_len_s})
     with open(build_log, "a") as error_log:
-        pipe_r_fd, pipe_w_fd = os.pipe()
-        pipe_r = os.fdopen(pipe_r_fd, "rb", buffering=0)
-        ffmpeg_args += ["-progress", f"pipe:{pipe_w_fd}"]
-        with subprocess.Popen(ffmpeg_args, stderr=error_log, cwd=working_dir, pass_fds=[pipe_w_fd]) as proc:
-            os.close(pipe_w_fd)
-            threading.Thread(target=_close_on_exit, args=[proc, pipe_r]).start()
-            for ln in pipe_r:
-                ln = ln.strip().decode('utf-8')
-                if '=' not in ln:
-                    continue
-                key, _, value = ln.partition('=')
-                if key != 'out_time_us' or value == 'N/A':
-                    continue
-                try:
-                    current_s = min(int(value) / 1000000., final_len_s)
-                    task.update_state(state="Running main build", meta={"current": current_s, "total": final_len_s})
-                except ValueError:
-                    logger.warning('Invalid out_time_us from ffmpeg: %s', ln)
-        if proc.returncode != 0:
-            raise subprocess.CalledProcessError(returncode=proc.returncode, cmd=ffmpeg_args)
+        for current_s in _run_ffmpeg(ffmpeg_args, stderr=error_log, cwd=working_dir):
+            current_s = min(current_s, final_len_s)
+            task.update_state(state="Running main build", meta={"current": current_s, "total": final_len_s})
     logger.info("Completed main build.")
 
     return str(output_path)
+
+def _run_ffmpeg(ffmpeg_args, **kwargs):
+    ffmpeg_args = list(ffmpeg_args)
+    pipe_r_fd, pipe_w_fd = os.pipe()
+    pipe_r = os.fdopen(pipe_r_fd, "rb", buffering=0)
+    ffmpeg_args += ["-progress", f"pipe:{pipe_w_fd}"]
+    with subprocess.Popen(ffmpeg_args, pass_fds=[pipe_w_fd], **kwargs) as proc:
+        os.close(pipe_w_fd)
+        threading.Thread(target=_close_on_exit, args=[proc, pipe_r]).start()
+        for ln in pipe_r:
+            ln = ln.strip().decode('utf-8')
+            if '=' not in ln:
+                continue
+            key, _, value = ln.partition('=')
+            if key != 'out_time_us' or value == 'N/A':
+                continue
+            try:
+                yield int(value) / 1000000.
+            except ValueError:
+                logger.warning('Invalid out_time_us from ffmpeg: %s', ln)
+    if proc.returncode != 0:
+        raise subprocess.CalledProcessError(returncode=proc.returncode, cmd=ffmpeg_args)
 
 def _close_on_exit(proc, f):
     proc.wait()
     f.close()
 
-def ingest_video(input_path, output_dir, framerate = FRAMERATE, log_dir = LOG_DIR):
+def ingest_video(task, input_path, output_dir, framerate = FRAMERATE, log_dir = LOG_DIR):
     
     start_timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     input_file = os.path.basename(input_path)
     output_path = Path.joinpath(Path(output_dir, os.path.splitext(input_file)[0] + ".mp4"))
+
+    # ffprobe to see how long this is...
+    ffprobe_args = [
+        FFPROBE_BIN,
+        "-v", "quiet",
+        "-print_format", "json",
+        "-show_format",
+        input_path,
+    ]
+    ffprobe_result = subprocess.check_output(ffprobe_args)
+    ffprobe_result_dict = json.loads(ffprobe_result)
+    final_len_s = float(ffprobe_result_dict['format']['duration'])
 
     ffmpeg_args = [
         FFMPEG_BIN,
@@ -307,7 +325,9 @@ def ingest_video(input_path, output_dir, framerate = FRAMERATE, log_dir = LOG_DI
     log_path = Path.joinpath(Path(log_dir), log_file)
 
     with open(log_path, "w+") as error_log:
-        subprocess.run(ffmpeg_args, stderr=error_log)
+        for current_s in _run_ffmpeg(ffmpeg_args, stderr=error_log):
+            current_s = min(current_s, final_len_s)
+            task.update_state(state="Ingesting...", meta={"current": current_s, "total": final_len_s})
 
     # Move to processed
     proc_folder = Path.joinpath(Path(os.path.dirname(input_path)), Path("Processed"))

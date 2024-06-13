@@ -37,6 +37,7 @@ in
 
         substituteInPlace hackyplayer/formvideo.py \
           --replace-fail 'FFMPEG_BIN = "ffmpeg"' 'FFMPEG_BIN = "${ffmpegWrapper}"' \
+          --replace-fail 'FFPROBE_BIN = "ffprobe"' 'FFPROBE_BIN = "${lib.getExe' ffmpeg "ffprobe"}"' \
           --replace-fail 'IMAGEMAGICK_BIN = "convert"' 'IMAGEMAGICK_BIN = "${lib.getExe' pkgs.imagemagick "convert"}"' \
           --replace-fail 'APP_ROOT = Path(".")' 'APP_ROOT = Path("${placeholder "out"}/${hackyplayer.python.sitePackages}/hackyplayer")'
       '';

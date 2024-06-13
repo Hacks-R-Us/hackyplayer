@@ -134,7 +134,7 @@ def api_tasks():
                     state = app_cel.AsyncResult(task["id"])
                     state.ready()
                     progress = 0
-                    if 'current' in state.info and 'total' in state.info:
+                    if state.info and 'current' in state.info and 'total' in state.info:
                         progress = (state.info['current'] * 100) / state.info['total']
                     result["data"].append({
                         "time_start": datetime.datetime.fromtimestamp(task["time_start"]).strftime('%Y-%m-%d %H:%M:%S'),
@@ -242,11 +242,17 @@ def api_ingest():
         for name,host in running_tasks.items():
             for task in host:
                 if task["type"] == tasks.ingest_video.name:
+                    state = app_cel.AsyncResult(task["id"])
+                    state.ready()
+                    progress = 0
+                    if state.info and 'current' in state.info and 'total' in state.info:
+                        progress = (state.info['current'] * 100) / state.info['total']
                     result["data"].append({
                         "time_start": datetime.datetime.fromtimestamp(task["time_start"]).strftime('%Y-%m-%d %H:%M:%S'),
                         "id": task["id"],
                         "input": task["args"][0],
-                        "node": task["hostname"]
+                        "node": task["hostname"],
+                        "progress": f"{progress:.1f}%",
                     })
     return flask.jsonify(result)
 
