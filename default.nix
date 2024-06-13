@@ -17,7 +17,7 @@ let
       });
     });
   };
-  ffmpeg = pkgs.ffmpeg-full;  # we need librsvg support
+  ffmpeg = pkgs.ffmpeg_7-full;  # we need librsvg support (-full)
 
   fontconfigConf = pkgs.makeFontsConf {
     fontDirectories = [
@@ -26,6 +26,7 @@ let
   };
   ffmpegWrapper = pkgs.writeShellScript "ffmpeg-wrapper" ''
     export FONTCONFIG_FILE="${fontconfigConf}"
+    export LADSPA_PATH="${lib.getLib pkgs.master_me}/lib/ladspa"
     exec "${lib.getExe' ffmpeg "ffmpeg"}" "$@"
   '';
 in
@@ -41,5 +42,5 @@ in
       '';
     });
   }) // {
-    inherit fontconfigConf ffmpegWrapper;
+    inherit fontconfigConf ffmpegWrapper ffmpeg;
   }
