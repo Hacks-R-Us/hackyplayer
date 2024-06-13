@@ -187,40 +187,12 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
         copr_file
     ]
 
-    ffmpeg_loudness_args = [
-        FFMPEG_BIN,
-        "-ss", start_ts, "-to", end_ts, "-i", video.name,
-        "-filter_complex", "[0:a]afade=in:d={in_:.2f},afade=out:st={out_st:.2f}:d={out:.2f},loudnorm=print_format=json".format(in_ = afade_in, out = afade_out, out_st = afade_offset),
-        "-f", "null", "-"
-    ]
-
     # Build all the text assets
     logger.info("Building text assets.")
     task.update_state(state="Building text assets")
     subprocess.check_output(start_title_args)
     subprocess.check_output(start_pres_arg)
     subprocess.check_output(copyright_args)
-
-    # First FFmpeg pass for getting loudness stats
-    logger.info("Detecting loudness information.")
-    logger.debug(ffmpeg_loudness_args)
-    task.update_state(state="Analysing Loudness")
-    with open(loud_log, "a") as error_log:
-        loud_output = subprocess.check_output(ffmpeg_loudness_args, stderr=subprocess.STDOUT, cwd=working_dir).decode("utf-8")
-        error_log.writelines(loud_output)
-        analysis = loud_output.split("\n")
-
-        json_detect = False
-        json_string = ""
-        for line in analysis:
-            if "[Parsed_loudnorm" in line:
-                json_detect = True
-                continue
-            if json_detect:
-                json_string += line
-        loud_vals = json.loads(json_string)
-    logger.info("Extracted loudness information.")
-    logger.debug(loud_vals)
 
     # Build file metadata list
     metadata = [
@@ -246,13 +218,8 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
         "-loop", "1", "-framerate", str(framerate), "-i", SPONS_FILE, #6
         "-loop", "1", "-framerate", str(framerate), "-i", copr_file, #7
         "-filter_complex", ("[0:a]afade=in:d={in_:.2f},afade=out:st={out_st:.2f}:d={out:.2f},adelay={title_end:.2f}:all=1,".format(in_ = afade_in, out = afade_out, out_st = afade_offset, spn_dur = spn_dur, title_end = title_end * 1000) +
-                            "loudnorm=I={target:.2f}:TP=-1.5:measured_I={mI}:measured_tp={mTP}:measured_LRA={mLRA}:measured_thresh={mTH}:offset={off}:linear=true:print_format=json[a1];".format(
-                                target = LOUD_LEVEL, 
-                                mI = loud_vals["input_i"],
-                                mTP = loud_vals["input_tp"],
-                                mLRA =  loud_vals["input_lra"],
-                                mTH = loud_vals["input_thresh"],
-                                off = loud_vals["target_offset"]) +
+                            # "volume=volume=1.9," +  # C3VOC were using this for GPN; do we need to boost the volume by 2x?
+                            "ladspa=f=master_me-ladspa:p=master_me:controls=c1=-16|c22=21|c59=-3[a1];" +
                             f"[0:v]settb=AVTB,fps={framerate:.2f},format=yuv420p[main];" +
                             f"[1:v]settb=AVTB,fps={framerate:.2f},format=yuv420p[bg];" +
                             f"[2:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[tp];" +
