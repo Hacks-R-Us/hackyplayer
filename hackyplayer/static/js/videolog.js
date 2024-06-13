@@ -274,7 +274,7 @@ function send_to_renderer(){
         setTimeout(function() {document.getElementById("talkid").classList.add('invalid')}, 100)
         valid = false
     }
-    
+
     if (valid) {
         // All good - send video for processing!
         var xhttp = new XMLHttpRequest();

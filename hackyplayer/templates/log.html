@@ -1,5 +1,6 @@
 {% include 'head.html' %}
         <script src="{{url_for('static', filename='js/videolog.js')}}"></script>
+        <script src="{{url_for('static', filename='js/rvfc-polyfill.js')}}"></script>
         <link rel="stylesheet" href="{{url_for('static', filename='css/log.css')}}">
     </head>
     <body>
@@ -75,7 +76,7 @@
                             <!--<input type="submit" value="Send to Renderer"/>-->
                             <button type="button" onclick="get_shuttle()">Connect to Shuttle controller</button><br/>
                         </div>
-                        
+
                     </div>
                 </div>
             </form>
