@@ -4,8 +4,10 @@ import datetime
 import json
 import logging
 import math
+import os
 import os.path
 import shutil
+import threading
 
 # Set default logger (is overwritten within certain functions)
 logger = logging.getLogger(__name__)
@@ -133,6 +135,7 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
     eb_end = fade_offset + end_dur # 
     end_tdur = end_dur + end_fade # Total duration of the endslate, including fade time
     title_end = spn_dur + title_dur
+    final_len_s = end_s - start_s + title_end + (end_fade_in/2.)
 
     lic_text = "This work is licensed under CC BY-SA 4.0. To view a copy of this license, visit https://creativecommons.org/licenses/by-sa/4.0/"
 
@@ -250,12 +253,35 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
     ]
     logger.info("Running main build.")
     logger.debug("'" + ("' '".join(str(f).replace("'", "'\"'\"'") for f in ffmpeg_args)) + "'")
-    task.update_state(state="Running main build")
+    task.update_state(state="Running main build", meta={"current": 0, "total": final_len_s})
     with open(build_log, "a") as error_log:
-        subprocess.check_output(ffmpeg_args, stderr=error_log, cwd=working_dir)
+        pipe_r_fd, pipe_w_fd = os.pipe()
+        pipe_r = os.fdopen(pipe_r_fd, "rb", buffering=0)
+        ffmpeg_args += ["-progress", f"pipe:{pipe_w_fd}"]
+        with subprocess.Popen(ffmpeg_args, stderr=error_log, cwd=working_dir, pass_fds=[pipe_w_fd]) as proc:
+            os.close(pipe_w_fd)
+            threading.Thread(target=_close_on_exit, args=[proc, pipe_r]).start()
+            for ln in pipe_r:
+                ln = ln.strip().decode('utf-8')
+                if '=' not in ln:
+                    continue
+                key, _, value = ln.partition('=')
+                if key != 'out_time_us' or value == 'N/A':
+                    continue
+                try:
+                    current_s = min(int(value) / 1000000., final_len_s)
+                    task.update_state(state="Running main build", meta={"current": current_s, "total": final_len_s})
+                except ValueError:
+                    logger.warning('Invalid out_time_us from ffmpeg: %s', ln)
+        if proc.returncode != 0:
+            raise subprocess.CalledProcessError(returncode=proc.returncode, cmd=ffmpeg_args)
     logger.info("Completed main build.")
 
     return str(output_path)
+
+def _close_on_exit(proc, f):
+    proc.wait()
+    f.close()
 
 def ingest_video(input_path, output_dir, framerate = FRAMERATE, log_dir = LOG_DIR):
     

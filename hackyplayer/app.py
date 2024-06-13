@@ -133,6 +133,9 @@ def api_tasks():
                 if task["type"] == tasks.build_video.name:
                     state = app_cel.AsyncResult(task["id"])
                     state.ready()
+                    progress = 0
+                    if 'current' in state.info and 'total' in state.info:
+                        progress = (state.info['current'] * 100) / state.info['total']
                     result["data"].append({
                         "time_start": datetime.datetime.fromtimestamp(task["time_start"]).strftime('%Y-%m-%d %H:%M:%S'),
                         "id": task["id"],
@@ -143,6 +146,7 @@ def api_tasks():
                         "out_tc": task["args"][3],
                         "node": task["hostname"],
                         "state": state.state,
+                        "progress": f"{progress:.1f}%",
                     })
 
     if scheduled_tasks:
@@ -161,6 +165,7 @@ def api_tasks():
                         "out_tc": task["args"][3],
                         "node": task["hostname"],
                         "state": state.state,
+                        "progress": "0%",
                     })
     return flask.jsonify(result)
 
