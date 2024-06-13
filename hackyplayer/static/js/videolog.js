@@ -1,5 +1,14 @@
 var framerate = 50
 
+function bpp () {
+    // Button play pause
+    video = document.getElementById("video1")
+    if (video.paused) {
+        video.play()
+    } else {
+        video.pause()
+    }
+}
 function bff (frames=1) {
     // Button Frame Forward
     document.getElementById("video1").currentTime = document.getElementById("video1").currentTime + frames/framerate
