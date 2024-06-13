@@ -300,9 +300,11 @@ def ingest_video(input_path, output_dir, framerate = FRAMERATE, log_dir = LOG_DI
         FFMPEG_BIN,
         "-i", input_path,
         "-vf", "bwdif",
+        "-filter_complex", '[0:a]channelsplit=channels=FL+FR,join=inputs=2:channel_layout=stereo[a]',
+        "-map", "0:v", "-map", "[a]",
         "-c:v", "h264", "-crf", "12", "-g", str(math.floor(framerate/2)), "-flags", "+cgop", "-s", "1920x1080",
         #"-c:v", "h264_nvenc", "-b:v", "12M",
-        "-c:a", "aac", "-ar", "48000", "-b:a", "128k",
+        "-c:a", "aac", "-ac", "2", "-ar", "48000", "-b:a", "128k",
         "-r", str(framerate), "-pix_fmt", "yuv420p", "-movflags", "+faststart", output_path, "-y"
     ]
 
