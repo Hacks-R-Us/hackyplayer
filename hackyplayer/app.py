@@ -204,8 +204,8 @@ def api_watch_stop(folder=None):
     
     fullpath = folder_config["FULLPATH"]
 
-    for node,tasks in app_cel.control.inspect().active().items():
-        for task in tasks:
+    for node, running_tasks in app_cel.control.inspect().active().items():
+        for task in running_tasks:
             if (task["args"][0] == str(fullpath) or folder == None) and task["type"] == tasks.watch_folder.name:
                 app_cel.control.revoke(task["id"], terminate=True)
     return flask.jsonify({'success':True})
@@ -248,8 +248,8 @@ def api_ingest():
 @app.route(app.config["api_route"]+"/ingest/<taskid>", methods=["DELETE"])
 def api_ingest_stop(taskid=None):
 
-    for node,tasks in app_cel.control.inspect().active().items():
-        for task in tasks:
+    for node, running_tasks in app_cel.control.inspect().active().items():
+        for task in running_tasks:
             if task["id"] == taskid and task["type"] == tasks.ingest_video.name:
                 app_cel.control.revoke(task["id"], terminate=True)
     return flask.jsonify({'success':True})
