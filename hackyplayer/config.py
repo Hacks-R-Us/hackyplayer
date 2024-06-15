@@ -6,36 +6,43 @@ import celery
 import flask
 
 DEFAULT_CONFIG = {
-    "VIDEO_SOURCES": [{
-        "DISKDIR": pathlib.Path("static/video/source"),
-        "WEBDIR": "source",
-        "EXT": [".mp4"],
-        "NAME": "Source"
-        }, {
-        "DISKDIR": pathlib.Path("static/video/output"),
-        "WEBDIR": "output",
-        "EXT": [".mp4"],
-        "NAME": "Output"
-        }, {
-        "DISKDIR": pathlib.Path("static/video/live"),
-        "WEBDIR": "live",
-        "EXT": [".mpd"],
-        "NAME": "Live"
-        }],
+    "VIDEO_SOURCES": [
+        {
+            "DISKDIR": pathlib.Path("static/video/source"),
+            "WEBDIR": "source",
+            "EXT": [".mp4"],
+            "NAME": "Source",
+        },
+        {
+            "DISKDIR": pathlib.Path("static/video/output"),
+            "WEBDIR": "output",
+            "EXT": [".mp4"],
+            "NAME": "Output",
+        },
+        {
+            "DISKDIR": pathlib.Path("static/video/live"),
+            "WEBDIR": "live",
+            "EXT": [".mpd"],
+            "NAME": "Live",
+        },
+    ],
     "VIDEO_OUTPUT": pathlib.Path("static/video/output"),
     "VIDEO_TEMP": pathlib.Path("temp"),
-    "WATCHFOLDERS": [{
-        "NAME": "input",
-        "FULLPATH": pathlib.Path("static/video/input"),
-        "OUTPUT_DIR": pathlib.Path("static/video/source")
-    }],
+    "WATCHFOLDERS": [
+        {
+            "NAME": "input",
+            "FULLPATH": pathlib.Path("static/video/input"),
+            "OUTPUT_DIR": pathlib.Path("static/video/source"),
+        }
+    ],
     "CELERY": {
         "broker_url": "redis://localhost",
         "result_backend": "redis://localhost",
         "task_ignore_result": False,
     },
-    "LOG_DIR": pathlib.Path("logs")
+    "LOG_DIR": pathlib.Path("logs"),
 }
+
 
 def celery_init_app(app):
     class FlaskTask(celery.Task):
@@ -49,6 +56,7 @@ def celery_init_app(app):
     app.extensions["celery"] = celery_app
     return celery_app
 
+
 def create_app():
     app = flask.Flask(__name__)
 
@@ -58,6 +66,7 @@ def create_app():
     # Load local settings
     try:
         import config_local
+
         app.config.update(config_local.CONFIG)
     except (ImportError, AttributeError):
         pass

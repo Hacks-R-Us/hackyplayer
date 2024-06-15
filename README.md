@@ -36,7 +36,12 @@ the `nix-shell -A shell`:
     flask --app hackyplayer.app run --debug
     celery -A hackyplayer.tasks worker --loglevel INFO
 
-And you should have a server running at localhost:5000
+And you should have a server running at localhost:5000.
+
+You can lint/format with (again, prefixed with `poetry run` if need to):
+
+    ruff check hackyplayer
+    ruff format hackyplayer
 
 ## Production
 Use gunicorn or another WSGI server. Make Celery run as a service or something? I dunno, still figuring this bit out
