@@ -5,7 +5,7 @@
 }:
 
 let
-  hackyplayer = poetry2nix.mkPoetryApplication {
+  hackyplayer' = groups: poetry2nix.mkPoetryApplication {
     groups = [ "prod" ];
     projectDir = ./.;
     overrides = poetry2nix.overrides.withDefaults (final: prev: {
@@ -17,6 +17,9 @@ let
       });
     });
   };
+  hackyplayerProd = hackyplayer' [ "prod" ];
+  hackyplayerDev = hackyplayer' [ "dev" ];
+
   ffmpeg = pkgs.ffmpeg_7-full;  # we need librsvg support (-full)
 
   fontconfigConf = pkgs.makeFontsConf {
@@ -30,8 +33,8 @@ let
     exec "${lib.getExe' ffmpeg "ffmpeg"}" "$@"
   '';
 in
-  (hackyplayer.dependencyEnv.override {
-    app = hackyplayer.overridePythonAttrs (old: {
+  (hackyplayerProd.dependencyEnv.override {
+    app = hackyplayerProd.overridePythonAttrs (old: {
       postPatch = ''
         ${old.postPatch or ""}
 
@@ -39,7 +42,7 @@ in
           --replace-fail 'FFMPEG_BIN = "ffmpeg"' 'FFMPEG_BIN = "${ffmpegWrapper}"' \
           --replace-fail 'FFPROBE_BIN = "ffprobe"' 'FFPROBE_BIN = "${lib.getExe' ffmpeg "ffprobe"}"' \
           --replace-fail 'IMAGEMAGICK_BIN = "convert"' 'IMAGEMAGICK_BIN = "${lib.getExe' pkgs.imagemagick "convert"}"' \
-          --replace-fail 'APP_ROOT = Path(".")' 'APP_ROOT = Path("${placeholder "out"}/${hackyplayer.python.sitePackages}/hackyplayer")'
+          --replace-fail 'APP_ROOT = Path(".")' 'APP_ROOT = Path("${placeholder "out"}/${hackyplayerProd.python.sitePackages}/hackyplayer")'
       '';
     });
   }) // {
@@ -48,7 +51,7 @@ in
     shell = pkgs.mkShell {
       packages = [ ffmpeg pkgs.imagemagick ];
 
-      inputsFrom = [ hackyplayer ];
+      inputsFrom = [ hackyplayerDev ];
 
       shellHook = ''
         export FONTCONFIG_FILE="${fontconfigConf}"
