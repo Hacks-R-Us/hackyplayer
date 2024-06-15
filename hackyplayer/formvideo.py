@@ -211,6 +211,9 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
     except KeyError:
         pass
 
+    # stagec has a background hum @ 150Hz
+    apply_150_hz_notch = 'stagec_' in video.name
+
     # Run the final build FFmpeg
     ffmpeg_args = [
         FFMPEG_BIN,
@@ -224,6 +227,7 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
         "-loop", "1", "-framerate", str(framerate), "-i", copr_file, #7
         "-filter_complex", ("[0:a]afade=in:d={in_:.2f},afade=out:st={out_st:.2f}:d={out:.2f},adelay={title_end:.2f}:all=1,".format(in_ = afade_in, out = afade_out, out_st = afade_offset, spn_dur = spn_dur, title_end = title_end * 1000) +
                             # "volume=volume=1.9," +  # C3VOC were using this for GPN; do we need to boost the volume by 2x?
+                            ("equalizer=frequency=150:width_type=q:width=10:g=-20," if apply_150_hz_notch else "") +
                             "ladspa=f=master_me-ladspa:p=master_me:controls=c1=-16|c22=21|c59=-3[a1];" +
                             f"[0:v]settb=AVTB,fps={framerate:.2f},format=yuv420p[main];" +
                             f"[1:v]settb=AVTB,fps={framerate:.2f},format=yuv420p[bg];" +
