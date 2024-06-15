@@ -4,14 +4,17 @@ import datetime
 import json
 import logging
 import math
+import os
 import os.path
 import shutil
+import threading
 
 # Set default logger (is overwritten within certain functions)
 logger = logging.getLogger(__name__)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 FFMPEG_BIN = "ffmpeg"
+FFPROBE_BIN = "ffprobe"
 IMAGEMAGICK_BIN = "convert"
 FRAMERATE = 50
 LOUD_LEVEL = -23
@@ -133,6 +136,7 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
     eb_end = fade_offset + end_dur # 
     end_tdur = end_dur + end_fade # Total duration of the endslate, including fade time
     title_end = spn_dur + title_dur
+    final_len_s = end_s - start_s + title_end + (end_fade_in/2.)
 
     lic_text = "This work is licensed under CC BY-SA 4.0. To view a copy of this license, visit https://creativecommons.org/licenses/by-sa/4.0/"
 
@@ -187,40 +191,12 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
         copr_file
     ]
 
-    ffmpeg_loudness_args = [
-        FFMPEG_BIN,
-        "-ss", start_ts, "-to", end_ts, "-i", video.name,
-        "-filter_complex", "[0:a]afade=in:d={in_:.2f},afade=out:st={out_st:.2f}:d={out:.2f},loudnorm=print_format=json".format(in_ = afade_in, out = afade_out, out_st = afade_offset),
-        "-f", "null", "-"
-    ]
-
     # Build all the text assets
     logger.info("Building text assets.")
     task.update_state(state="Building text assets")
     subprocess.check_output(start_title_args)
     subprocess.check_output(start_pres_arg)
     subprocess.check_output(copyright_args)
-
-    # First FFmpeg pass for getting loudness stats
-    logger.info("Detecting loudness information.")
-    logger.debug(ffmpeg_loudness_args)
-    task.update_state(state="Analysing Loudness")
-    with open(loud_log, "a") as error_log:
-        loud_output = subprocess.check_output(ffmpeg_loudness_args, stderr=subprocess.STDOUT, cwd=working_dir).decode("utf-8")
-        error_log.writelines(loud_output)
-        analysis = loud_output.split("\n")
-
-        json_detect = False
-        json_string = ""
-        for line in analysis:
-            if "[Parsed_loudnorm" in line:
-                json_detect = True
-                continue
-            if json_detect:
-                json_string += line
-        loud_vals = json.loads(json_string)
-    logger.info("Extracted loudness information.")
-    logger.debug(loud_vals)
 
     # Build file metadata list
     metadata = [
@@ -242,60 +218,104 @@ def form_video(task, video, talk, start_tc, end_tc, framerate = FRAMERATE, out_d
         "-loop", "1", "-framerate", str(framerate), "-i", TRANSP_FILE, #2
         "-loop", "1", "-framerate", str(framerate), "-i", spres_file, #3
         "-loop", "1", "-framerate", str(framerate), "-i", stalk_file, #4
-        "-loop", "1", "-framerate", str(framerate), "-i", LOGO_FILE, #5
+        "-width", "850", "-height", "380", "-keep_ar", "1", "-loop", "1", "-framerate", str(framerate), "-i", LOGO_FILE, #5
         "-loop", "1", "-framerate", str(framerate), "-i", SPONS_FILE, #6
         "-loop", "1", "-framerate", str(framerate), "-i", copr_file, #7
         "-filter_complex", ("[0:a]afade=in:d={in_:.2f},afade=out:st={out_st:.2f}:d={out:.2f},adelay={title_end:.2f}:all=1,".format(in_ = afade_in, out = afade_out, out_st = afade_offset, spn_dur = spn_dur, title_end = title_end * 1000) +
-                            "loudnorm=I={target:.2f}:TP=-1.5:measured_I={mI}:measured_tp={mTP}:measured_LRA={mLRA}:measured_thresh={mTH}:offset={off}:linear=true:print_format=json[a1];".format(
-                                target = LOUD_LEVEL, 
-                                mI = loud_vals["input_i"],
-                                mTP = loud_vals["input_tp"],
-                                mLRA =  loud_vals["input_lra"],
-                                mTH = loud_vals["input_thresh"],
-                                off = loud_vals["target_offset"]) +
-                            "[5:v]split[l1][l2];" +
-                            "[1:v]settb=1/{framerate:.2f},split[bg1][bg2];".format(framerate = framerate) +
-                            "[0:v]settb=1/{framerate:.2f}[m1];".format(framerate = framerate) +
-                            "[2:v][3:v]overlay=x=60:y=640:shortest=1[s2];" +
-                            "[s2][4:v]overlay=x=60:y=320:shortest=1[s3];" +
+                            # "volume=volume=1.9," +  # C3VOC were using this for GPN; do we need to boost the volume by 2x?
+                            "ladspa=f=master_me-ladspa:p=master_me:controls=c1=-16|c22=21|c59=-3[a1];" +
+                            f"[0:v]settb=AVTB,fps={framerate:.2f},format=yuv420p[main];" +
+                            f"[1:v]settb=AVTB,fps={framerate:.2f},format=yuv420p[bg];" +
+                            f"[2:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[tp];" +
+                            f"[3:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[slide-pres];" +
+                            f"[4:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[slide-title];" +
+                            f"[5:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[logo];" +
+                            f"[6:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[slide-spons];" +
+                            f"[7:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[slide-copyright];" +
+                            "[logo]split[l1][l2];" +
+                            "[bg]split[bg1][bg2];" +
+                            "[tp][slide-pres]overlay=x=60:y=640:shortest=1[s2];" +
+                            "[s2][slide-title]overlay=x=60:y=320:shortest=1[s3];" +
                             "[s3][l1]overlay=shortest=1[s4];" +
-                            "[6:v][s4]xfade=offset={spn_dur:.2f}:duration={spn_fade_out:.2f}[s5];".format(spn_dur = spn_dur, spn_fade_out = spn_fade_out) +
-                            "[bg1]trim=start=0:end={title_end:.2f}[bg3];".format(title_end = title_end) +
+                            f"[slide-spons][s4]xfade=offset={spn_dur:.2f}:duration={spn_fade_out:.2f}[s5];" +
+                            f"[bg1]trim=start=0:end={title_end:.2f}[bg3];" +
                             "[bg3][s5]overlay[s6];" +       
                             "[bg2][l2]overlay[e1];" +
-                            "[e1][7:v]overlay=x=870:y=70:shortest=1,trim=start=0:end={end_tdur:.2f}[e2];".format(end_tdur = end_tdur) +
-                            "[m1][e2]xfade=offset={eb_start:.2f}:duration=1,fade=out:st={eb_end:.2f}:d={end_fade:.2f}[m2];".format(eb_start = fade_offset, eb_end = eb_end, end_fade = end_fade) +
+                            f"[e1][slide-copyright]overlay=x=870:y=70:shortest=1,trim=start=0:end={end_tdur:.2f}[e2];" +
+                            "[main][e2]xfade=offset={eb_start:.2f}:duration=1,fade=out:st={eb_end:.2f}:d={end_fade:.2f}[m2];".format(eb_start = fade_offset, eb_end = eb_end, end_fade = end_fade) +
                             "[s6][m2]xfade=offset={title_end:.2f}:duration={title_fade_out:.2f},fade=in:d={spn_fade_in:.2f}[p1]".format(title_fade_out = title_fade_out, title_end = title_end, spn_fade_in = spn_fade_in)
                             
         ),
-        "-map", "[p1]", "-map", "[a1]", "-map_metadata", "-1",
+        "-map", "[p1]:v", "-map", "[a1]:a", "-map_metadata", "-1",
         *metadata,
         "-c:v", "h264", "-crf", "16", "-g", str(math.floor(framerate/2)), "-flags", "+cgop",
-        "-c:a", "aac", "-ar", "48000", "-b:a", "128k",
+        "-c:a", "aac", "-ac", "2", "-ar", "48000", "-b:a", "128k",
         "-r", str(framerate), "-pix_fmt", "yuv420p", "-movflags", "+faststart", output_path, "-y"
     ]
     logger.info("Running main build.")
-    logger.debug(ffmpeg_args)
-    task.update_state(state="Running main build")
+    logger.debug("'" + ("' '".join(str(f).replace("'", "'\"'\"'") for f in ffmpeg_args)) + "'")
+    task.update_state(state="Running main build", meta={"current": 0, "total": final_len_s})
     with open(build_log, "a") as error_log:
-        subprocess.check_output(ffmpeg_args, stderr=error_log, cwd=working_dir)
+        for current_s in _run_ffmpeg(ffmpeg_args, stderr=error_log, cwd=working_dir):
+            current_s = min(current_s, final_len_s)
+            task.update_state(state="Running main build", meta={"current": current_s, "total": final_len_s})
     logger.info("Completed main build.")
 
     return str(output_path)
 
-def ingest_video(input_path, output_dir, framerate = FRAMERATE, log_dir = LOG_DIR):
+def _run_ffmpeg(ffmpeg_args, **kwargs):
+    ffmpeg_args = list(ffmpeg_args)
+    pipe_r_fd, pipe_w_fd = os.pipe()
+    pipe_r = os.fdopen(pipe_r_fd, "rb", buffering=0)
+    ffmpeg_args += ["-progress", f"pipe:{pipe_w_fd}"]
+    with subprocess.Popen(ffmpeg_args, pass_fds=[pipe_w_fd], **kwargs) as proc:
+        os.close(pipe_w_fd)
+        threading.Thread(target=_close_on_exit, args=[proc, pipe_r]).start()
+        for ln in pipe_r:
+            ln = ln.strip().decode('utf-8')
+            if '=' not in ln:
+                continue
+            key, _, value = ln.partition('=')
+            if key != 'out_time_us' or value == 'N/A':
+                continue
+            try:
+                yield int(value) / 1000000.
+            except ValueError:
+                logger.warning('Invalid out_time_us from ffmpeg: %s', ln)
+    if proc.returncode != 0:
+        raise subprocess.CalledProcessError(returncode=proc.returncode, cmd=ffmpeg_args)
+
+def _close_on_exit(proc, f):
+    proc.wait()
+    f.close()
+
+def ingest_video(task, input_path, output_dir, framerate = FRAMERATE, log_dir = LOG_DIR):
     
     start_timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     input_file = os.path.basename(input_path)
     output_path = Path.joinpath(Path(output_dir, os.path.splitext(input_file)[0] + ".mp4"))
 
+    # ffprobe to see how long this is...
+    ffprobe_args = [
+        FFPROBE_BIN,
+        "-v", "quiet",
+        "-print_format", "json",
+        "-show_format",
+        input_path,
+    ]
+    ffprobe_result = subprocess.check_output(ffprobe_args)
+    ffprobe_result_dict = json.loads(ffprobe_result)
+    final_len_s = float(ffprobe_result_dict['format']['duration'])
+
     ffmpeg_args = [
         FFMPEG_BIN,
         "-i", input_path,
         "-vf", "bwdif",
+        "-filter_complex", '[0:a]channelsplit=channels=FL+FR,join=inputs=2:channel_layout=stereo[a]',
+        "-map", "0:v", "-map", "[a]",
         "-c:v", "h264", "-crf", "12", "-g", str(math.floor(framerate/2)), "-flags", "+cgop", "-s", "1920x1080",
         #"-c:v", "h264_nvenc", "-b:v", "12M",
-        "-c:a", "aac", "-ar", "48000", "-b:a", "128k",
+        "-c:a", "aac", "-ac", "2", "-ar", "48000", "-b:a", "128k",
         "-r", str(framerate), "-pix_fmt", "yuv420p", "-movflags", "+faststart", output_path, "-y"
     ]
 
@@ -305,7 +325,9 @@ def ingest_video(input_path, output_dir, framerate = FRAMERATE, log_dir = LOG_DI
     log_path = Path.joinpath(Path(log_dir), log_file)
 
     with open(log_path, "w+") as error_log:
-        subprocess.run(ffmpeg_args, stderr=error_log)
+        for current_s in _run_ffmpeg(ffmpeg_args, stderr=error_log):
+            current_s = min(current_s, final_len_s)
+            task.update_state(state="Ingesting...", meta={"current": current_s, "total": final_len_s})
 
     # Move to processed
     proc_folder = Path.joinpath(Path(os.path.dirname(input_path)), Path("Processed"))

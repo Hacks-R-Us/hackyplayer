@@ -1,23 +1,21 @@
 # Installation
 - Install redis (or other Celery-compatible broker)
+- Install ffmpeg and imagemagick
 - Clone repo
-- Create venv
-- Install python requirements
+- Run `poetry install`
 - Make the following directories:
   - <install_dir>/static/video/input
   - <install_dir>/static/video/output
   - <install_dir>/temp
 
 # Config
-Create config_local.py next to config.py
 
-    import pathlib
+Use environment variables, prefixed with `FLASK_`. Flask supports automatically parsing values as JSON, which can be useful for specifying some settings.
 
-    CONFIG = {
-        "VIDEO_SOURCE": pathlib.Path("somepath"),
-        "VIDEO_OUTPUT": pathlib.Path("someotherpath"),
-        "VIDEO_TEMP": pathlib.Path("yetanotherpath")
-    }
+```
+FLASK_VIDEO_SOURCE=somepath
+FLASK_WATCHFOLDERS='[{"FULLPATH":"/store/emf/2024/video/input","NAME":"input","OUTPUT_DIR":"/store/emf/2024/video/source"}]'
+```
 
 Any entries you leave out will use defaults.
 
@@ -25,10 +23,10 @@ Rember to configure whatever websever you're using to serve source and output fo
 
 # Running
 ## Development
-In seperate consoles/screens/tmux windows, after activating the venv, run each of the following:
+In seperate consoles/screens/tmux windows, run each of the following:
 
-    flask run --debug
-    Celery -A tasks worker --loglevel INFO
+    poetry run flask --app hackyplayer.app run --debug
+    celery -A hackyplayer.tasks worker --loglevel INFO
 
 And you should have a server running at localhost:5000
 

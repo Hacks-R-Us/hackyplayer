@@ -133,6 +133,9 @@ def api_tasks():
                 if task["type"] == tasks.build_video.name:
                     state = app_cel.AsyncResult(task["id"])
                     state.ready()
+                    progress = 0
+                    if state.info and 'current' in state.info and 'total' in state.info:
+                        progress = (state.info['current'] * 100) / state.info['total']
                     result["data"].append({
                         "time_start": datetime.datetime.fromtimestamp(task["time_start"]).strftime('%Y-%m-%d %H:%M:%S'),
                         "id": task["id"],
@@ -143,6 +146,7 @@ def api_tasks():
                         "out_tc": task["args"][3],
                         "node": task["hostname"],
                         "state": state.state,
+                        "progress": f"{progress:.1f}%",
                     })
 
     if scheduled_tasks:
@@ -161,6 +165,7 @@ def api_tasks():
                         "out_tc": task["args"][3],
                         "node": task["hostname"],
                         "state": state.state,
+                        "progress": "0%",
                     })
     return flask.jsonify(result)
 
@@ -204,8 +209,8 @@ def api_watch_stop(folder=None):
     
     fullpath = folder_config["FULLPATH"]
 
-    for node,tasks in app_cel.control.inspect().active().items():
-        for task in tasks:
+    for node, running_tasks in app_cel.control.inspect().active().items():
+        for task in running_tasks:
             if (task["args"][0] == str(fullpath) or folder == None) and task["type"] == tasks.watch_folder.name:
                 app_cel.control.revoke(task["id"], terminate=True)
     return flask.jsonify({'success':True})
@@ -237,19 +242,25 @@ def api_ingest():
         for name,host in running_tasks.items():
             for task in host:
                 if task["type"] == tasks.ingest_video.name:
+                    state = app_cel.AsyncResult(task["id"])
+                    state.ready()
+                    progress = 0
+                    if state.info and 'current' in state.info and 'total' in state.info:
+                        progress = (state.info['current'] * 100) / state.info['total']
                     result["data"].append({
                         "time_start": datetime.datetime.fromtimestamp(task["time_start"]).strftime('%Y-%m-%d %H:%M:%S'),
                         "id": task["id"],
                         "input": task["args"][0],
-                        "node": task["hostname"]
+                        "node": task["hostname"],
+                        "progress": f"{progress:.1f}%",
                     })
     return flask.jsonify(result)
 
 @app.route(app.config["api_route"]+"/ingest/<taskid>", methods=["DELETE"])
 def api_ingest_stop(taskid=None):
 
-    for node,tasks in app_cel.control.inspect().active().items():
-        for task in tasks:
+    for node, running_tasks in app_cel.control.inspect().active().items():
+        for task in running_tasks:
             if task["id"] == taskid and task["type"] == tasks.ingest_video.name:
                 app_cel.control.revoke(task["id"], terminate=True)
     return flask.jsonify({'success':True})
