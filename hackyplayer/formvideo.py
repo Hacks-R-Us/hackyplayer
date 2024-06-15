@@ -289,60 +289,14 @@ def form_video(
     # Run the final build FFmpeg
     ffmpeg_args = [
         FFMPEG_BIN,
-        "-ss",
-        start_ts,
-        "-to",
-        end_ts,
-        "-i",
-        video.name,  # 0
-        "-stream_loop",
-        "-1",
-        "-r",
-        str(framerate),
-        "-i",
-        BKGD_FILE,  # 1
-        "-loop",
-        "1",
-        "-framerate",
-        str(framerate),
-        "-i",
-        TRANSP_FILE,  # 2
-        "-loop",
-        "1",
-        "-framerate",
-        str(framerate),
-        "-i",
-        spres_file,  # 3
-        "-loop",
-        "1",
-        "-framerate",
-        str(framerate),
-        "-i",
-        stalk_file,  # 4
-        "-width",
-        "850",
-        "-height",
-        "380",
-        "-keep_ar",
-        "1",
-        "-loop",
-        "1",
-        "-framerate",
-        str(framerate),
-        "-i",
-        LOGO_FILE,  # 5
-        "-loop",
-        "1",
-        "-framerate",
-        str(framerate),
-        "-i",
-        SPONS_FILE,  # 6
-        "-loop",
-        "1",
-        "-framerate",
-        str(framerate),
-        "-i",
-        copr_file,  # 7
+        "-ss", start_ts, "-to", end_ts, "-i", video.name,  # 0
+        "-stream_loop", "-1", "-r", str(framerate), "-i", BKGD_FILE,  # 1
+        "-loop", "1", "-framerate", str(framerate), "-i", TRANSP_FILE,  # 2
+        "-loop", "1", "-framerate", str(framerate), "-i", spres_file,  # 3
+        "-loop", "1", "-framerate", str(framerate), "-i", stalk_file,  # 4
+        "-width", "850", "-height", "380", "-keep_ar", "1", "-loop", "1", "-framerate", str(framerate), "-i", LOGO_FILE,  # 5
+        "-loop", "1", "-framerate", str(framerate), "-i", SPONS_FILE,  # 6
+        "-loop", "1", "-framerate", str(framerate), "-i", copr_file,  # 7
         "-filter_complex",
         (
             "[0:a]afade=in:d={in_:.2f},afade=out:st={out_st:.2f}:d={out:.2f},adelay={title_end:.2f}:all=1,".format(
@@ -386,38 +340,24 @@ def form_video(
                 spn_fade_in=spn_fade_in,
             )
         ),
-        "-map",
-        "[p1]:v",
-        "-map",
-        "[a1]:a",
-        "-map_metadata",
-        "-1",
+        "-map", "[p1]:v",
+        "-map", "[a1]:a",
+        "-map_metadata", "-1",
         *metadata,
-        "-c:v",
-        "h264",
-        "-crf",
-        "16",
-        "-g",
-        str(math.floor(framerate / 2)),
-        "-flags",
-        "+cgop",
-        "-c:a",
-        AAC_ENCODER,
-        "-ac",
-        "2",
-        "-ar",
-        "48000",
-        "-b:a",
-        "128k",
-        "-r",
-        str(framerate),
-        "-pix_fmt",
-        "yuv420p",
-        "-movflags",
-        "+faststart",
+        "-c:v", "h264",
+            "-crf", "16",
+            "-g", str(math.floor(framerate / 2)),
+            "-flags", "+cgop",
+        "-c:a", AAC_ENCODER,
+            "-ac", "2",
+            "-ar", "48000",
+            "-b:a", "128k",
+        "-r", str(framerate),
+        "-pix_fmt", "yuv420p",
+        "-movflags", "+faststart",
         output_path,
         "-y",
-    ]
+    ]  # fmt: skip
     logger.info("Running main build.")
     logger.debug(
         "'" + ("' '".join(str(f).replace("'", "'\"'\"'") for f in ffmpeg_args)) + "'"
