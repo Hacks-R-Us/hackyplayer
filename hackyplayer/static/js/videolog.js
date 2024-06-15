@@ -110,15 +110,10 @@ function snap_to_timestamp (ele) {
     document.getElementById("video1").currentTime = new_time
 }
 
-function updateTC(now, meta) {
-    var frames = seconds_to_timestamp(meta.mediaTime)
+function updateTC(timestamp) {
+    var frames = seconds_to_timestamp(timestamp)
     document.getElementById("current_tc").value = frames
-    document.getElementById("video1").requestVideoFrameCallback(updateTC)
 };
-
-function frameevent() {
-    document.getElementById("video1").requestVideoFrameCallback(updateTC)
-}
 
 function checkKey(e) {
     e = e || window.event;
@@ -162,7 +157,23 @@ function checkKey(e) {
     }
 }
 
-window.onload = frameevent
+function beginUpdatingTC(ele) {
+    const frameCallback = (now, meta) => {
+        updateTC(meta.mediaTime)
+        ele.requestVideoFrameCallback(frameCallback)
+    }
+    ele.requestVideoFrameCallback(frameCallback)
+    if (!('requestVideoFrameCallback' in HTMLVideoElement.prototype) || ('_rvfcpolyfillmap' in HTMLVideoElement.prototype)) {
+        console.info("requestVideoFrameCallback is not available or is polyfilled, added seeked listener to update TC")
+        ele.addEventListener("seeked", (ev) => {
+            updateTC(ele.currentTime)
+        })
+    }
+}
+
+document.addEventListener("DOMContentLoaded", (ev) => {
+    beginUpdatingTC(document.getElementById("video1"))
+})
 
 document.onkeydown = checkKey;
 
