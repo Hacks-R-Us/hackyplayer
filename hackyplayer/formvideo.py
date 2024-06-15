@@ -558,7 +558,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     class Object:
-        request: 'Object | None'
+        request: "Object | None"
         id: int | None
 
     task = Object()

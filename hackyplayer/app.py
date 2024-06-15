@@ -141,7 +141,7 @@ def api_build():
             vid_dir_path = pathlib.Path(source["DISKDIR"])
             break
     else:
-        raise ValueError(f'unknown video dir {vid_dir}')
+        raise ValueError(f"unknown video dir {vid_dir}")
     vid = pathlib.Path(flask.request.form["video"]).parts[1]
     grist_data = {
         "in_time": flask.request.form["start_tc"],
