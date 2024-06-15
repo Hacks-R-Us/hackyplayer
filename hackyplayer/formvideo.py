@@ -294,27 +294,33 @@ def _close_on_exit(proc, f):
     proc.wait()
     f.close()
 
-def ingest_video(task, input_path, output_dir, framerate = FRAMERATE, log_dir = LOG_DIR):
-    
-    start_timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    input_file = os.path.basename(input_path)
-    output_path = Path.joinpath(Path(output_dir, os.path.splitext(input_file)[0] + ".mp4"))
-
-    # ffprobe to see how long this is...
+def _video_duration_seconds(fn):
     ffprobe_args = [
         FFPROBE_BIN,
         "-v", "quiet",
         "-print_format", "json",
         "-show_format",
-        input_path,
+        str(fn),
     ]
     ffprobe_result = subprocess.check_output(ffprobe_args)
     ffprobe_result_dict = json.loads(ffprobe_result)
-    final_len_s = float(ffprobe_result_dict['format']['duration'])
+    return float(ffprobe_result_dict['format']['duration'])
+
+def ingest_video(task, input_path, output_dir, framerate = FRAMERATE, log_dir = LOG_DIR):
+    input_path = Path(input_path)
+
+    job_log_dir = Path(log_dir) / str(task.request.id)
+    job_log_dir.mkdir(parents=True, exist_ok=True)
+
+    start_timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    input_file = input_path.name
+    output_path = Path.joinpath(Path(output_dir, os.path.splitext(input_file)[0] + ".mp4"))
+
+    final_len_s = _video_duration_seconds(input_path)
 
     ffmpeg_args = [
         FFMPEG_BIN,
-        "-i", input_path,
+        "-i", str(input_path),
         "-vf", "bwdif",
         "-filter_complex", '[0:a]channelsplit=channels=FL+FR,join=inputs=2:channel_layout=stereo[a]',
         "-map", "0:v", "-map", "[a]",
@@ -326,8 +332,7 @@ def ingest_video(task, input_path, output_dir, framerate = FRAMERATE, log_dir = 
 
     logger.debug(ffmpeg_args)
 
-    log_file = Path(input_file + start_timestamp + ".log")
-    log_path = Path.joinpath(Path(log_dir), log_file)
+    log_path = job_log_dir / f"{input_file}{start_timestamp}.log"
 
     with open(log_path, "w+") as error_log:
         for current_s in _run_ffmpeg(ffmpeg_args, stderr=error_log):
@@ -335,8 +340,9 @@ def ingest_video(task, input_path, output_dir, framerate = FRAMERATE, log_dir = 
             task.update_state(state="Ingesting...", meta={"current": current_s, "total": final_len_s})
 
     # Move to processed
-    proc_folder = Path.joinpath(Path(os.path.dirname(input_path)), Path("Processed"))
-    shutil.move(input_path, str(Path.joinpath(Path(proc_folder), Path(input_file))))
+    proc_folder = input_path.parent / "Processed"
+    proc_folder.mkdir(parents=True, exist_ok=True)
+    shutil.move(input_path, proc_folder / input_path.name)
 
     return str(output_path)
 
