@@ -7,6 +7,7 @@ import urllib
 
 # PIP
 import flask
+import requests
 
 # Local
 from . import config
@@ -73,6 +74,37 @@ def log(vid_dir, video):
     talks_json = json.dumps(talks_sorted)
     return flask.render_template("log.html", **locals())
 
+def _update_grist(talk_id, grist_data):
+    if 'GRIST_TABLE_URL' not in app.config or 'GRIST_KEY' not in app.config:
+        return
+    sess = requests.session()
+    sess.headers.update({
+        'Authorization': f'Bearer {app.config["GRIST_KEY"]}',
+    })
+
+    # Find the right ID
+    resp = sess.get(app.config['GRIST_TABLE_URL'])
+    resp.raise_for_status()
+    for record in resp.json()['records']:
+        if str(record['fields']['id2']) == str(talk_id):
+            talk_record = record
+            break
+    else:
+        return  # couldn't find it :(
+
+    # Patch
+    resp = sess.patch(
+        app.config['GRIST_TABLE_URL'],
+        headers={'Content-Type': 'application/json'},
+        json={
+            'records': [{
+                'id': talk_record['id'],
+                'fields': grist_data,
+            }],
+        },
+    )
+    resp.raise_for_status()
+
 @app.route(app.config["api_route"]+"/build", methods=['POST'])
 def api_build():
 
@@ -102,6 +134,13 @@ def api_build():
         if source["WEBDIR"] == vid_dir:
             vid_dir_path = pathlib.Path(source["DISKDIR"])
     vid = pathlib.Path(flask.request.form['video']).parts[1]
+    grist_data = {
+        'in_time': flask.request.form['start_tc'],
+        'out_time': flask.request.form['end_tc'],
+        'Source_file': vid,
+    }
+    if flask.request.form['talkid']:
+        _update_grist(flask.request.form['talkid'], grist_data)
     result = tasks.build_video.delay(
         str(vid_dir_path / vid), 
         talk_data, 
