@@ -557,8 +557,9 @@ def ingest_video(task, input_path, output_dir, framerate=FRAMERATE, log_dir=LOG_
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    class Object(object):
-        pass
+    class Object:
+        request: 'Object | None'
+        id: int | None
 
     task = Object()
     task.request = Object()

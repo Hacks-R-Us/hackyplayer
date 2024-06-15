@@ -26,6 +26,8 @@ gunicorn = "^22.0.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "0.4.4"
+pyright = "^1.1.367"
+celery-types = "^0.22.0"
 
 [build-system]
 requires = ["poetry-core"]

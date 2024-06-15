@@ -2,7 +2,7 @@ import datetime
 import json
 import os
 import pathlib
-import urllib
+import urllib.parse
 
 import flask
 import requests
@@ -139,6 +139,9 @@ def api_build():
     for source in app.config["VIDEO_SOURCES"]:
         if source["WEBDIR"] == vid_dir:
             vid_dir_path = pathlib.Path(source["DISKDIR"])
+            break
+    else:
+        raise ValueError(f'unknown video dir {vid_dir}')
     vid = pathlib.Path(flask.request.form["video"]).parts[1]
     grist_data = {
         "in_time": flask.request.form["start_tc"],
@@ -258,7 +261,7 @@ def api_watch():
 
 
 @app.route(app.config["api_route"] + "/watch/<folder>", methods=["DELETE"])
-def api_watch_stop(folder=None):
+def api_watch_stop(folder: str):
     folder_config = None
     for conf in app.config["WATCHFOLDERS"]:
         if conf["NAME"] == urllib.parse.unquote(folder):

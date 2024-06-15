@@ -65,7 +65,7 @@ def create_app():
 
     # Load local settings
     try:
-        import config_local
+        import config_local  # pyright: ignore
 
         app.config.update(config_local.CONFIG)
     except (ImportError, AttributeError):

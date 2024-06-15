@@ -15,6 +15,9 @@ let
             --replace-fail "poetry.masonry.api" "poetry.core.masonry.api"
         '';
       });
+      pyright = prev.pyright.overridePythonAttrs (old: {
+        nativeBuildInputs = old.nativeBuildInputs ++ [ final.setuptools ];
+      });
     });
   };
   hackyplayerProd = hackyplayer' [ "prod" ];
@@ -49,13 +52,14 @@ in
     inherit fontconfigConf ffmpegWrapper ffmpeg;
 
     shell = pkgs.mkShell {
-      packages = [ ffmpeg pkgs.imagemagick ];
+      packages = [ ffmpeg pkgs.imagemagick pkgs.poetry pkgs.nodejs ];
 
       inputsFrom = [ hackyplayerDev ];
 
       shellHook = ''
         export FONTCONFIG_FILE="${fontconfigConf}"
         export LADSPA_PATH="${lib.getLib pkgs.master_me}/lib/ladspa"
+        export PYRIGHT_PYTHON_GLOBAL_NODE=true
       '';
     };
   }
