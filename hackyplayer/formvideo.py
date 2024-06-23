@@ -422,7 +422,14 @@ def ingest_video(task, input_path, output_dir, framerate=FRAMERATE, log_dir=LOG_
         "-i", str(input_path),
         "-vf", "bwdif",
         "-filter_complex",
-        "[0:a]channelsplit=channels=FL+FR,join=inputs=2:channel_layout=stereo,adelay=250,aresample=async=1,dynaudnorm=maxgain=80,ladspa=f=master_me-ladspa:p=master_me:controls=c1=-16|c22=21|c59=-3[a]",
+        (
+            "[0:a]channelsplit=channels=FL+FR,"
+            "join=inputs=2:channel_layout=stereo,"
+            "adelay=250,"
+            "aresample=async=1,"
+            "dynaudnorm=maxgain=80,"
+            "ladspa=f=master_me-ladspa:p=master_me:controls=c1=-16|c22=21|c59=-3[a]"
+        ),
         "-map", "0:v",
         "-map", "[a]",
         "-c:v", "h264",
