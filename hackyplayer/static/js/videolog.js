@@ -1,5 +1,14 @@
 var framerate = 50
 
+function bpp () {
+    // Button play pause
+    video = document.getElementById("video1")
+    if (video.paused) {
+        video.play()
+    } else {
+        video.pause()
+    }
+}
 function bff (frames=1) {
     // Button Frame Forward
     document.getElementById("video1").currentTime = document.getElementById("video1").currentTime + frames/framerate
@@ -101,15 +110,10 @@ function snap_to_timestamp (ele) {
     document.getElementById("video1").currentTime = new_time
 }
 
-function updateTC(now, meta) {
-    var frames = seconds_to_timestamp(meta.mediaTime)
+function updateTC(timestamp) {
+    var frames = seconds_to_timestamp(timestamp)
     document.getElementById("current_tc").value = frames
-    document.getElementById("video1").requestVideoFrameCallback(updateTC)
 };
-
-function frameevent() {
-    document.getElementById("video1").requestVideoFrameCallback(updateTC)
-}
 
 function checkKey(e) {
     e = e || window.event;
@@ -153,7 +157,23 @@ function checkKey(e) {
     }
 }
 
-window.onload = frameevent
+function beginUpdatingTC(ele) {
+    const frameCallback = (now, meta) => {
+        updateTC(meta.mediaTime)
+        ele.requestVideoFrameCallback(frameCallback)
+    }
+    ele.requestVideoFrameCallback(frameCallback)
+    if (!('requestVideoFrameCallback' in HTMLVideoElement.prototype) || ('_rvfcpolyfillmap' in HTMLVideoElement.prototype)) {
+        console.info("requestVideoFrameCallback is not available or is polyfilled, added seeked listener to update TC")
+        ele.addEventListener("seeked", (ev) => {
+            updateTC(ele.currentTime)
+        })
+    }
+}
+
+document.addEventListener("DOMContentLoaded", (ev) => {
+    beginUpdatingTC(document.getElementById("video1"))
+})
 
 document.onkeydown = checkKey;
 
@@ -265,7 +285,7 @@ function send_to_renderer(){
         setTimeout(function() {document.getElementById("talkid").classList.add('invalid')}, 100)
         valid = false
     }
-    
+
     if (valid) {
         // All good - send video for processing!
         var xhttp = new XMLHttpRequest();
