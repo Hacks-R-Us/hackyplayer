@@ -281,6 +281,7 @@ def form_video(
                 title_end=title_end * 1000,
             )
             +
+            "aresample=async=1," +
             # "volume=volume=1.9," +  # C3VOC were using this for GPN; do we need to boost the volume by 2x?
             (
                 "equalizer=frequency=150:width_type=q:width=10:g=-20,"
@@ -421,7 +422,7 @@ def ingest_video(task, input_path, output_dir, framerate=FRAMERATE, log_dir=LOG_
         "-i", str(input_path),
         "-vf", "bwdif",
         "-filter_complex",
-        "[0:a]channelsplit=channels=FL+FR,join=inputs=2:channel_layout=stereo[a]",
+        "[0:a]channelsplit=channels=FL+FR,join=inputs=2:channel_layout=stereo,adelay=250,aresample=async=1,dynaudnorm=maxgain=80,ladspa=f=master_me-ladspa:p=master_me:controls=c1=-16|c22=21|c59=-3[a]",
         "-map", "0:v",
         "-map", "[a]",
         "-c:v", "h264",
