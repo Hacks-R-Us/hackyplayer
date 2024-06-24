@@ -425,7 +425,7 @@ def ingest_video(task, input_path, output_dir, framerate=FRAMERATE, log_dir=LOG_
         (
             "[0:a]channelsplit=channels=FL+FR,"
             "join=inputs=2:channel_layout=stereo,"
-            "adelay=250,"
+            "adelay=250:all=1,"
             "aresample=async=1,"
             "dynaudnorm=maxgain=80,"
             "ladspa=f=master_me-ladspa:p=master_me:controls=c1=-16|c22=21|c59=-3[a]"
