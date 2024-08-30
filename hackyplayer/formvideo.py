@@ -31,6 +31,7 @@ BKGD_FILE = RESOURCE_DIR / "BG_V3_LC_Shaded.mp4"
 TRANSP_FILE = RESOURCE_DIR / "transparent.png"
 LOGO_FILE = RESOURCE_DIR / "logo.svg"
 SPONS_FILE = RESOURCE_DIR / "sponsor_slide_rounded.png"
+SPONS_END_FILE = RESOURCE_DIR / "sponsor_end_slide.png"
 
 
 def timecode_split(timecode, framerate=FRAMERATE):
@@ -241,7 +242,7 @@ def form_video(
         "-background",
         "#00000000",
         "-fill",
-        "#2eadd9",
+        "#ffffff",
         "-gravity",
         "east",
         "-font",
@@ -297,6 +298,7 @@ def form_video(
         "-width", "850", "-height", "380", "-keep_ar", "1", "-loop", "1", "-framerate", str(framerate), "-i", LOGO_FILE,  # 5
         "-loop", "1", "-framerate", str(framerate), "-i", SPONS_FILE,  # 6
         "-loop", "1", "-framerate", str(framerate), "-i", copr_file,  # 7
+        "-loop", "1", "-framerate", str(framerate), "-i", SPONS_END_FILE,  # 8
         "-filter_complex",
         (
             "[0:a]afade=in:d={in_:.2f},afade=out:st={out_st:.2f}:d={out:.2f},adelay={title_end:.2f}:all=1,".format(
@@ -321,19 +323,28 @@ def form_video(
             + f"[5:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[logo];"
             + f"[6:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[slide-spons];"
             + f"[7:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[slide-copyright];"
+            + f"[8:v]settb=AVTB,fps={framerate:.2f},format=yuva420p[slide-spons-end];"
             + "[logo]split[l1][l2];"
             + "[bg]split[bg1][bg2];"
+            # Build the title slide by overlaying presenter/title/logo files
             + "[tp][slide-pres]overlay=x=60:y=640:shortest=1[s2];"
             + "[s2][slide-title]overlay=x=60:y=320:shortest=1[s3];"
             + "[s3][l1]overlay=shortest=1[s4];"
+            # fade sponsor slide into title slide
             + f"[slide-spons][s4]xfade=offset={spn_dur:.2f}:duration={spn_fade_out:.2f}[s5];"
+            # add background to the intro slides
             + f"[bg1]trim=start=0:end={title_end:.2f}[bg3];"
             + "[bg3][s5]overlay[s6];"
+            # build end slide by overlaying logo, background, copyright text and
+            # sponsors
             + "[bg2][l2]overlay[e1];"
-            + f"[e1][slide-copyright]overlay=x=870:y=70:shortest=1,trim=start=0:end={end_tdur:.2f}[e2];"
-            + "[main][e2]xfade=offset={eb_start:.2f}:duration=1,fade=out:st={eb_end:.2f}:d={end_fade:.2f}[m2];".format(
+            + "[e1][slide-spons-end]overlay[e2];"
+            + f"[e2][slide-copyright]overlay=x=870:y=70:shortest=1,trim=start=0:end={end_tdur:.2f}[end];"
+            # fade main video into end slide
+            + "[main][end]xfade=offset={eb_start:.2f}:duration=1,fade=out:st={eb_end:.2f}:d={end_fade:.2f}[m2];".format(
                 eb_start=fade_offset, eb_end=eb_end, end_fade=end_fade
             )
+            # fade intro slides into main video
             + "[s6][m2]xfade=offset={title_end:.2f}:duration={title_fade_out:.2f},fade=in:d={spn_fade_in:.2f}[p1]".format(
                 title_fade_out=title_fade_out,
                 title_end=title_end,
