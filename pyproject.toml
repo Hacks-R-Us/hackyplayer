@@ -1,40 +1,41 @@
 [project]
 name = "hackyplayer"
-authors = [{name = "Hackyplayer Authors", email = "honk@hacksrus.org"}]
+authors = [
+    {name = "Hackyplayer Authors", email = "honk@hacksrus.org"},
+]
 readme = "README.md"
-dynamic = ["version", "description"]
+requires-python = "<4.0,>=3.11"
+dependencies = [
+    "flask<4.0.0,>=3.0.3",
+    "celery<6.0.0,>=5.4.0",
+    "celery-singleton<1.0.0,>=0.3.1",
+    "requests<3.0.0,>=2.32.3",
+]
+version = "0.0.1"
+description = ""
 
 [project.urls]
 Home = "https://hacksrus.org"
 
-[tool.poetry]
-name = "hackyplayer"
-version = "0.0.1"
-description = ""
-authors = ["Hackyplayer Authors <honk@hacksrus.org>"]
-readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.11"
-flask = "^3.0.3"
-celery = "^5.4.0"
-celery-singleton = "^0.3.1"
-requests = "^2.32.3"
-
-[tool.poetry.group.prod.dependencies]
-gunicorn = "^22.0.0"
-
-[tool.poetry.group.dev.dependencies]
-ruff = "0.4.4"
-pyright = "^1.1.367"
-celery-types = "^0.22.0"
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+prod = [
+    "gunicorn<23.0.0,>=22.0.0",
+]
+dev = [
+    "ruff==0.4.4",
+    "pyright<2.0.0,>=1.1.367",
+    "celery-types<1.0.0,>=0.22.0",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
 ignore = [
   "E501",  # line-too-long
 ]
+
+[tool.uv]
+default-groups = ["dev"]

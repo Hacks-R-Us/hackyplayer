@@ -8,7 +8,7 @@
   - Manual
     - Install ffmpeg and imagemagick
     - Install https://github.com/trummerschlunk/master_me as a LADSPA plugin (or make sure it's on your `LADSPA_PATH`)
-    - Run `poetry install`
+    - Run `uv install`
 - Make the following directories:
   - <install_dir>/static/video/input
   - <install_dir>/static/video/output
@@ -30,7 +30,7 @@ Rember to configure whatever websever you're using to serve source and output fo
 # Running
 ## Development
 In seperate consoles/screens/tmux windows, run each of the following - if you
-installed manually, prefix with `poetry run`; if you used Lix/Nix, run inside
+installed manually, prefix with `uv run`; if you used Lix/Nix, run inside
 the `nix-shell -A shell`:
 
     flask --app hackyplayer.app run --debug

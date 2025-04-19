@@ -1,26 +1,50 @@
 {
+    "build-system-pkgs": {
+        "branch": "master",
+        "description": null,
+        "homepage": null,
+        "owner": "pyproject-nix",
+        "repo": "build-system-pkgs",
+        "rev": "7dba6dbc73120e15b558754c26024f6c93015dd7",
+        "sha256": "0xcy3adpvi0csmfvs4ic1wl4i6ak7bqqxqg8l158h6v3ap0i4awz",
+        "type": "tarball",
+        "url": "https://github.com/pyproject-nix/build-system-pkgs/archive/7dba6dbc73120e15b558754c26024f6c93015dd7.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "nixpkgs": {
         "branch": "nixos-unstable",
         "description": "Nix Packages collection",
         "homepage": null,
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "c7b821ba2e1e635ba5a76d299af62821cbcb09f3",
-        "sha256": "0gzqmnniwqjs7hqi6y9zxf2by1j2nxa82zsixzskbr1yrw5vfcqr",
+        "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+        "sha256": "09dahi81cn02gnzsc8a00n945dxc18656ar0ffx5vgxjj1nhgsvy",
         "type": "tarball",
-        "url": "https://github.com/NixOS/nixpkgs/archive/c7b821ba2e1e635ba5a76d299af62821cbcb09f3.tar.gz",
+        "url": "https://github.com/NixOS/nixpkgs/archive/b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
-    "poetry2nix": {
+    "pyproject.nix": {
         "branch": "master",
-        "description": "Convert poetry projects to nix automagically [maintainer=@adisbladis] ",
-        "homepage": "",
-        "owner": "nix-community",
-        "repo": "poetry2nix",
-        "rev": "304f8235fb0729fd48567af34fcd1b58d18f9b95",
-        "sha256": "1089qk0qzjjdm3xp2c9g6nl74zmdzphc9wb9c4rcph9gad5nqrgb",
+        "description": "A collection of Nix utilities to work with Python projects [maintainer=@adisbladis]",
+        "homepage": "https://pyproject-nix.github.io/pyproject.nix/",
+        "owner": "pyproject-nix",
+        "repo": "pyproject.nix",
+        "rev": "8063ec98edc459571d042a640b1c5e334ecfca1e",
+        "sha256": "1s9rgp11paqiar2y3gphsb9bi2i9vrwc060a8w5zpdn6wsi9lr6l",
         "type": "tarball",
-        "url": "https://github.com/nix-community/poetry2nix/archive/304f8235fb0729fd48567af34fcd1b58d18f9b95.tar.gz",
+        "url": "https://github.com/pyproject-nix/pyproject.nix/archive/8063ec98edc459571d042a640b1c5e334ecfca1e.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "uv2nix": {
+        "branch": "master",
+        "description": "Uv2nix - Ingest uv workspaces using Nix [maintainer=@adisbladis] ",
+        "homepage": "https://pyproject-nix.github.io/uv2nix/",
+        "owner": "pyproject-nix",
+        "repo": "uv2nix",
+        "rev": "3583e037163491ecd833f1d5d3eedf3869543c5d",
+        "sha256": "0yc9xd35gvrz6a71jsbccj7z82h0009yv1h03cph2r138q34kpw2",
+        "type": "tarball",
+        "url": "https://github.com/pyproject-nix/uv2nix/archive/3583e037163491ecd833f1d5d3eedf3869543c5d.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     }
 }
